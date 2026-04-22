@@ -1,0 +1,11 @@
+.git
+.github
+.gitlab-ci.yml
+.vscode
+*.md
+!README.md
+bin/
+dist/
+coverage.*
+*.test
+Dockerfile*
