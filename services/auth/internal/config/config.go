@@ -17,6 +17,12 @@ type Config struct {
 	LogFormat         string
 	KubeconfigPath    string
 
+	// Namespace is the namespace in which the auth service runs. Secrets and
+	// Dex storage CRs read/written by the controller live here. Defaults to
+	// the content of /var/run/secrets/kubernetes.io/serviceaccount/namespace
+	// or the POD_NAMESPACE environment variable.
+	Namespace string
+
 	// BootstrapAdminUsername is the username of the administrator created on
 	// first startup when no User CR exists yet.
 	BootstrapAdminUsername string
@@ -25,10 +31,23 @@ type Config struct {
 	// same namespace as the auth service and expose a "password" key.
 	BootstrapAdminPasswordSecret string
 
-	// DexConfigMapName is the ConfigMap that holds the Dex configuration. The
-	// auth service rewrites the staticPasswords section whenever User CRs
-	// change.
-	DexConfigMapName string
+	// OIDC client configuration — used at startup to (re)materialise the
+	// OAuth2Client Dex custom resource the gateway authenticates against.
+	OIDCClientID           string
+	OIDCClientName         string
+	OIDCClientSecretSecret string
+	OIDCClientSecretKey    string
+	OIDCRedirectURIs       []string
+
+	// LeaderElection toggles controller-runtime leader election. Defaults to
+	// true; disable only when running a single-replica controller during dev.
+	LeaderElection bool
+	// MetricsAddr is where the controller-runtime metrics server binds. An
+	// empty value disables the metrics server.
+	MetricsAddr string
+	// HealthProbeAddr is where the controller-runtime health endpoints bind.
+	// Leave empty to rely solely on our own /healthz and /readyz.
+	HealthProbeAddr string
 }
 
 // Load reads the configuration from the process environment.
@@ -39,15 +58,39 @@ func Load() (*Config, error) {
 		LogLevel:                     strings.ToLower(getString("LOG_LEVEL", "info")),
 		LogFormat:                    strings.ToLower(getString("LOG_FORMAT", "json")),
 		KubeconfigPath:               os.Getenv("KUBECONFIG"),
+		Namespace:                    resolveNamespace(),
 		BootstrapAdminUsername:       getString("BOOTSTRAP_ADMIN_USERNAME", "admin"),
 		BootstrapAdminPasswordSecret: getString("BOOTSTRAP_ADMIN_PASSWORD_SECRET", "crossplane-ui-bootstrap-admin"),
-		DexConfigMapName:             getString("DEX_CONFIGMAP_NAME", "crossplane-ui-dex-config"),
+		OIDCClientID:                 getString("OIDC_CLIENT_ID", ""),
+		OIDCClientName:               getString("OIDC_CLIENT_NAME", "crossplane-ui"),
+		OIDCClientSecretSecret:       getString("OIDC_CLIENT_SECRET_NAME", ""),
+		OIDCClientSecretKey:          getString("OIDC_CLIENT_SECRET_KEY", "clientSecret"),
+		OIDCRedirectURIs:             splitList(getString("OIDC_REDIRECT_URIS", "")),
+		LeaderElection:               getBool("LEADER_ELECTION", true),
+		MetricsAddr:                  getString("METRICS_ADDR", ":8082"),
+		HealthProbeAddr:              getString("HEALTH_PROBE_ADDR", ""),
 	}
 
 	if err := cfg.validate(); err != nil {
 		return nil, err
 	}
 	return cfg, nil
+}
+
+// resolveNamespace reads the pod namespace. The service account token file is
+// the authoritative source in-cluster; POD_NAMESPACE is the escape hatch for
+// local runs.
+func resolveNamespace() string {
+	if v := os.Getenv("POD_NAMESPACE"); v != "" {
+		return v
+	}
+	if b, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace"); err == nil {
+		ns := strings.TrimSpace(string(b))
+		if ns != "" {
+			return ns
+		}
+	}
+	return getString("NAMESPACE", "crossplane-ui")
 }
 
 func (c *Config) validate() error {
@@ -67,6 +110,21 @@ func (c *Config) validate() error {
 	return nil
 }
 
+func getBool(key string, def bool) bool {
+	v, ok := os.LookupEnv(key)
+	if !ok || v == "" {
+		return def
+	}
+	switch strings.ToLower(v) {
+	case "1", "true", "yes", "y", "on":
+		return true
+	case "0", "false", "no", "n", "off":
+		return false
+	default:
+		return def
+	}
+}
+
 func getString(key, def string) string {
 	if v, ok := os.LookupEnv(key); ok && v != "" {
 		return v
@@ -84,4 +142,17 @@ func getDuration(key string, def time.Duration) time.Duration {
 		return def
 	}
 	return d
+}
+
+func splitList(s string) []string {
+	fields := strings.FieldsFunc(s, func(r rune) bool {
+		return r == ',' || r == ' ' || r == '\t' || r == '\n'
+	})
+	out := make([]string, 0, len(fields))
+	for _, f := range fields {
+		if f = strings.TrimSpace(f); f != "" {
+			out = append(out, f)
+		}
+	}
+	return out
 }

@@ -39,7 +39,6 @@ func New(logger *slog.Logger, cfg *config.Config) *Server {
 
 // ListenAndServe starts the server. It blocks until the server exits.
 func (s *Server) ListenAndServe() error {
-	s.logger.Info("http server listening", slog.String("addr", s.cfg.HTTPAddr))
 	return s.http.ListenAndServe()
 }
 
