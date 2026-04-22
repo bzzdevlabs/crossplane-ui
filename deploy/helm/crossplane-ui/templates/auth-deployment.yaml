@@ -1,0 +1,75 @@
+{{- $component := "auth" -}}
+{{- $selector := (dict "ctx" . "component" $component) -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "crossplane-ui.fullname" . }}-{{ $component }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "crossplane-ui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  replicas: {{ .Values.auth.replicaCount }}
+  strategy:
+    type: Recreate  # single-leader controller.
+  selector:
+    matchLabels:
+      {{- include "crossplane-ui.selectorLabels" $selector | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "crossplane-ui.selectorLabels" $selector | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "crossplane-ui.serviceAccountName" $selector }}
+      automountServiceAccountToken: true
+      securityContext:
+        {{- toYaml .Values.auth.podSecurityContext | nindent 8 }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: auth
+          image: {{ include "crossplane-ui.image" (dict "ctx" . "service" .Values.auth.image) }}
+          imagePullPolicy: {{ .Values.auth.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+          env:
+            - name: HTTP_ADDR
+              value: ":8081"
+            - name: LOG_LEVEL
+              value: {{ .Values.auth.logLevel | quote }}
+            - name: LOG_FORMAT
+              value: {{ .Values.auth.logFormat | quote }}
+            - name: BOOTSTRAP_ADMIN_USERNAME
+              value: {{ .Values.auth.bootstrapAdmin.username | quote }}
+            - name: BOOTSTRAP_ADMIN_PASSWORD_SECRET
+              value: "{{ include "crossplane-ui.fullname" . }}-bootstrap-admin"
+            - name: DEX_CONFIGMAP_NAME
+              value: "{{ include "crossplane-ui.fullname" . }}-dex-config"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.auth.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.auth.securityContext | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 32Mi

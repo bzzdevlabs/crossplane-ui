@@ -1,0 +1,43 @@
+apiVersion: v2
+name: crossplane-ui
+description: |
+  Admin UI for Crossplane v2 — visualize, create, edit and delete Crossplane
+  resources (Compositions, Composite Resources, Managed Resources, Providers,
+  Functions, ...) with a Rancher-inspired look & feel.
+type: application
+
+# The chart version is bumped by semantic-release on every release.
+# The application version tracks the latest gateway/auth container tag.
+version: 0.1.0
+appVersion: "0.1.0"
+
+home: https://gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui
+sources:
+  - https://gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui
+
+kubeVersion: ">=1.33.0-0"
+
+keywords:
+  - crossplane
+  - admin
+  - dashboard
+  - rancher
+  - platform-engineering
+
+maintainers:
+  - name: Quentin Gerard
+    email: quentin.gerard@telespazio.com
+
+icon: https://crossplane.io/favicon.svg
+
+annotations:
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/category: integration-delivery
+  artifacthub.io/prerelease: "true"
+
+dependencies:
+  - name: dex
+    version: "~0.19.0"
+    repository: https://charts.dexidp.io
+    condition: dex.enabled
+    alias: dex

@@ -1,0 +1,26 @@
+crossplane-ui has been installed in namespace {{ .Release.Namespace }}.
+
+1. Follow the rollout:
+
+   kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "crossplane-ui.fullname" . }}-gateway
+   kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "crossplane-ui.fullname" . }}-auth
+
+2. Read the bootstrap admin credentials:
+
+   kubectl -n {{ .Release.Namespace }} get secret {{ include "crossplane-ui.fullname" . }}-bootstrap-admin \
+     -o jsonpath='{.data.username}' | base64 -d ; echo
+   kubectl -n {{ .Release.Namespace }} get secret {{ include "crossplane-ui.fullname" . }}-bootstrap-admin \
+     -o jsonpath='{.data.password}' | base64 -d ; echo
+
+3. Reach the UI:
+
+{{- if .Values.ingress.enabled }}
+{{- range $h := .Values.ingress.hosts }}
+   https://{{ $h.host }}
+{{- end }}
+{{- else }}
+   kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "crossplane-ui.fullname" . }}-gateway {{ .Values.gateway.service.port }}:{{ .Values.gateway.service.port }}
+   # then open http://localhost:{{ .Values.gateway.service.port }}
+{{- end }}
+
+Documentation: {{ .Chart.Home }}

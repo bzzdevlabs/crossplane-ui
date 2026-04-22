@@ -1,0 +1,175 @@
+# Default values for crossplane-ui.
+# These values MAY be overridden by the user at install time.
+
+# -- Number of API object replicas to deploy for stateless workloads.
+global:
+  # -- Docker image registry shared by all services.
+  imageRegistry: "registry.gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui"
+  imagePullSecrets: []
+  # -- Common labels applied to every rendered object.
+  labels: {}
+  # -- Common annotations applied to every rendered object.
+  annotations: {}
+
+nameOverride: ""
+fullnameOverride: ""
+
+# -----------------------------------------------------------------------------
+# gateway service — HTTP entrypoint, OIDC verify, K8s impersonation, UI static.
+# -----------------------------------------------------------------------------
+gateway:
+  replicaCount: 2
+  image:
+    repository: "gateway"
+    tag: ""        # defaults to .Chart.AppVersion
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    fsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    capabilities:
+      drop: ["ALL"]
+  env: []
+  logLevel: info
+  logFormat: json
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# -----------------------------------------------------------------------------
+# auth service — local user controller + bootstrap admin.
+# -----------------------------------------------------------------------------
+auth:
+  replicaCount: 1   # controller, must be a single leader; HA comes in M3 with leader election.
+  image:
+    repository: "auth"
+    tag: ""
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8081
+  resources:
+    requests:
+      cpu: 25m
+      memory: 48Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+    fsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    capabilities:
+      drop: ["ALL"]
+  logLevel: info
+  logFormat: json
+
+  # -- Bootstrap administrator. If password is left empty the chart generates a
+  #    random password on first install and stores it in the Secret named
+  #    `{release}-bootstrap-admin`; read it with:
+  #      kubectl get secret -o jsonpath='{.data.password}' | base64 -d
+  bootstrapAdmin:
+    enabled: true
+    username: admin
+    # -- Plain-text password. LEAVE EMPTY to auto-generate on first install.
+    password: ""
+
+# -----------------------------------------------------------------------------
+# Ingress — optional; cert-manager annotations recommended.
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - host: crossplane-ui.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+    # - secretName: crossplane-ui-tls
+    #   hosts:
+    #     - crossplane-ui.local
+
+# -----------------------------------------------------------------------------
+# NetworkPolicy — deny-by-default with minimal allowances.
+# -----------------------------------------------------------------------------
+networkPolicy:
+  enabled: true
+
+# -----------------------------------------------------------------------------
+# Prometheus ServiceMonitor (needs prometheus-operator).
+# -----------------------------------------------------------------------------
+serviceMonitor:
+  enabled: false
+  interval: 30s
+  scrapeTimeout: 10s
+  labels: {}
+
+# -----------------------------------------------------------------------------
+# Dex — upstream subchart (charts.dexidp.io).
+# Only the keys relevant to our wiring are set here; refer to the upstream
+# chart for the full reference:
+#   https://github.com/dexidp/helm-charts/blob/main/charts/dex/values.yaml
+# -----------------------------------------------------------------------------
+dex:
+  enabled: true
+  image:
+    tag: v2.42.0
+  config:
+    issuer: "http://dex.crossplane-ui.svc.cluster.local:5556"
+    storage:
+      type: kubernetes
+      config:
+        inCluster: true
+    oauth2:
+      skipApprovalScreen: true
+    enablePasswordDB: true
+    staticClients:
+      - id: crossplane-ui
+        name: crossplane-ui gateway
+        # The actual secret is set from the value .Values.oidc.clientSecret or
+        # auto-generated; wired in the templates.
+        redirectURIs:
+          - http://localhost:5173/auth/callback
+          - http://crossplane-ui.local/auth/callback
+    # Local users are provisioned by the auth service (M3+), not by the chart.
+    staticPasswords: []
+    connectors: []
+
+# -----------------------------------------------------------------------------
+# OIDC — shared client configuration consumed by the gateway.
+# -----------------------------------------------------------------------------
+oidc:
+  issuerURL: ""           # derived from dex if empty
+  clientID: crossplane-ui
+  # -- Shared secret between Dex staticClients[0] and the gateway.
+  #    Leave empty to auto-generate on first install.
+  clientSecret: ""

@@ -1,0 +1,18 @@
+{{- $component := "auth" -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "crossplane-ui.fullname" . }}-{{ $component }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "crossplane-ui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+spec:
+  type: {{ .Values.auth.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.auth.service.port }}
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "crossplane-ui.selectorLabels" (dict "ctx" . "component" $component) | nindent 4 }}
