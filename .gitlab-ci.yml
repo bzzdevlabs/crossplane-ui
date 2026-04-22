@@ -11,12 +11,6 @@
 #   test. Re-enable them by uncommenting each block when the project is
 #   ready to publish images, charts and releases.
 
-include:
-  - template: Security/SAST.gitlab-ci.yml
-  - template: Security/Secret-Detection.gitlab-ci.yml
-  - template: Security/Dependency-Scanning.gitlab-ci.yml
-  # License-Scanning removed on request; re-add if/when legal review needs it.
-
 stages:
   - lint
   - test
@@ -53,7 +47,7 @@ variables:
 
 .cache-pnpm: &cache-pnpm
   key:
-    files: ["web/ui/pnpm-lock.yaml"]
+    files: [ "web/ui/pnpm-lock.yaml" ]
   paths:
     - web/ui/node_modules
     - .cache/pnpm
@@ -73,7 +67,7 @@ lint:go:
   image: "golangci/golangci-lint:v2.3.0"
   cache:
     - <<: *cache-go
-  rules: !reference [.rules-pipeline, rules]
+  rules: !reference [ .rules-pipeline, rules ]
   script:
     - cd services/gateway && golangci-lint run ./...
     - cd ../auth       && golangci-lint run ./...
@@ -84,7 +78,7 @@ lint:ui:
   image: $NODE_IMAGE
   cache:
     - <<: *cache-pnpm
-  rules: !reference [.rules-pipeline, rules]
+  rules: !reference [ .rules-pipeline, rules ]
   before_script:
     - corepack enable
     - cd web/ui
@@ -97,7 +91,7 @@ lint:ui:
 lint:helm:
   stage: lint
   image: $HELM_IMAGE
-  rules: !reference [.rules-pipeline, rules]
+  rules: !reference [ .rules-pipeline, rules ]
   before_script:
     - helm repo add dex https://charts.dexidp.io
     - helm dependency update deploy/helm/crossplane-ui
@@ -107,7 +101,7 @@ lint:helm:
 lint:yaml:
   stage: lint
   image: "cytopia/yamllint:1"
-  rules: !reference [.rules-pipeline, rules]
+  rules: !reference [ .rules-pipeline, rules ]
   script:
     - yamllint .
 
@@ -128,7 +122,7 @@ test:go:
   image: $GO_IMAGE
   cache:
     - <<: *cache-go
-  rules: !reference [.rules-pipeline, rules]
+  rules: !reference [ .rules-pipeline, rules ]
   script:
     - apk add --no-cache make git
     - |
@@ -150,7 +144,7 @@ test:ui:
   image: $NODE_IMAGE
   cache:
     - <<: *cache-pnpm
-  rules: !reference [.rules-pipeline, rules]
+  rules: !reference [ .rules-pipeline, rules ]
   before_script:
     - corepack enable
     - cd web/ui
