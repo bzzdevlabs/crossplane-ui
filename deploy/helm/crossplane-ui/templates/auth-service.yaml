@@ -14,5 +14,9 @@ spec:
       port: {{ .Values.auth.service.port }}
       targetPort: http
       protocol: TCP
+    - name: metrics
+      port: 8082
+      targetPort: metrics
+      protocol: TCP
   selector:
     {{- include "crossplane-ui.selectorLabels" (dict "ctx" . "component" $component) | nindent 4 }}

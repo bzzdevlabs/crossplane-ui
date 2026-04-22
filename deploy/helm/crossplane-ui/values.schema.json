@@ -94,7 +94,12 @@
       "properties": {
         "issuerURL": { "type": "string" },
         "clientID": { "type": "string", "minLength": 1 },
-        "clientSecret": { "type": "string" }
+        "clientName": { "type": "string" },
+        "clientSecret": { "type": "string" },
+        "redirectURIs": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
       }
     }
   },

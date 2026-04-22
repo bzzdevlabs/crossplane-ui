@@ -1,0 +1,79 @@
+{{- $component := "auth" -}}
+{{- $saName := include "crossplane-ui.serviceAccountName" (dict "ctx" . "component" $component) -}}
+{{- $fullname := include "crossplane-ui.fullname" . -}}
+---
+# Cluster-scoped permissions: the controller watches User and Group CRs which
+# are cluster-scoped.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $fullname }}-{{ $component }}
+  labels:
+    {{- include "crossplane-ui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+rules:
+  - apiGroups: ["auth.crossplane-ui.io"]
+    resources: ["users", "groups"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["auth.crossplane-ui.io"]
+    resources: ["users/status", "groups/status"]
+    verbs: ["get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $fullname }}-{{ $component }}
+  labels:
+    {{- include "crossplane-ui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $saName }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $fullname }}-{{ $component }}
+---
+# Namespace-scoped permissions. All Dex storage CRs (Password, OAuth2Client)
+# live in Dex's own namespace — which, in this chart, is the release
+# namespace. The Secret carrying the bootstrap password, the OIDC client
+# secret and the leader-election Lease all live there too.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $fullname }}-{{ $component }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "crossplane-ui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["dex.coreos.com"]
+    resources: ["passwords", "oauth2clients"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $fullname }}-{{ $component }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "crossplane-ui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: {{ $component }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $saName }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $fullname }}-{{ $component }}

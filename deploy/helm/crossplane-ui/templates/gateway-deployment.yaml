@@ -51,6 +51,11 @@ spec:
               value: {{ .Values.oidc.issuerURL | default (printf "http://%s-dex.%s.svc.cluster.local:5556" .Release.Name .Release.Namespace) | quote }}
             - name: OIDC_CLIENT_ID
               value: {{ .Values.oidc.clientID | quote }}
+            - name: OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "crossplane-ui.fullname" . }}-oidc
+                  key: clientSecret
             {{- with .Values.gateway.env }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

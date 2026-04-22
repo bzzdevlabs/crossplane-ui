@@ -138,6 +138,11 @@ serviceMonitor:
 # Only the keys relevant to our wiring are set here; refer to the upstream
 # chart for the full reference:
 #   https://github.com/dexidp/helm-charts/blob/main/charts/dex/values.yaml
+#
+# The OAuth2Client and password database are projected into Dex's Kubernetes
+# storage by the auth service (OAuth2Client + Password CRs under the
+# dex.coreos.com/v1 group). No staticClients / staticPasswords are required
+# here, and password rotation does not need a Dex restart.
 # -----------------------------------------------------------------------------
 dex:
   enabled: true
@@ -152,24 +157,25 @@ dex:
     oauth2:
       skipApprovalScreen: true
     enablePasswordDB: true
-    staticClients:
-      - id: crossplane-ui
-        name: crossplane-ui gateway
-        # The actual secret is set from the value .Values.oidc.clientSecret or
-        # auto-generated; wired in the templates.
-        redirectURIs:
-          - http://localhost:5173/auth/callback
-          - http://crossplane-ui.local/auth/callback
-    # Local users are provisioned by the auth service (M3+), not by the chart.
+    staticClients: []
     staticPasswords: []
     connectors: []
 
 # -----------------------------------------------------------------------------
-# OIDC — shared client configuration consumed by the gateway.
+# OIDC — shared client configuration consumed by the gateway and materialised
+# into a Dex OAuth2Client CR by the auth service at startup.
 # -----------------------------------------------------------------------------
 oidc:
-  issuerURL: ""           # derived from dex if empty
+  issuerURL: ""                  # derived from dex if empty
   clientID: crossplane-ui
-  # -- Shared secret between Dex staticClients[0] and the gateway.
-  #    Leave empty to auto-generate on first install.
+  clientName: "crossplane-ui"
+  # -- Shared secret between the Dex OAuth2Client CR and the gateway.
+  #    Leave empty to auto-generate on first install; the chart keeps the
+  #    generated value across upgrades via a Secret named {release}-oidc
+  #    carrying `helm.sh/resource-policy: keep`.
   clientSecret: ""
+  # -- OAuth2 redirect URIs allowed for the gateway. Update before exposing
+  #    the UI behind a real hostname / ingress.
+  redirectURIs:
+    - http://localhost:5173/auth/callback
+    - http://crossplane-ui.local/auth/callback

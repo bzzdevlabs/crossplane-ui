@@ -1,5 +1,7 @@
 {{- $component := "auth" -}}
 {{- $selector := (dict "ctx" . "component" $component) -}}
+{{- $oidcSecret := printf "%s-oidc" (include "crossplane-ui.fullname" .) -}}
+{{- $redirects := default (list) .Values.oidc.redirectURIs -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -36,19 +38,38 @@ spec:
             - name: http
               containerPort: 8081
               protocol: TCP
+            - name: metrics
+              containerPort: 8082
+              protocol: TCP
           env:
             - name: HTTP_ADDR
               value: ":8081"
+            - name: METRICS_ADDR
+              value: ":8082"
             - name: LOG_LEVEL
               value: {{ .Values.auth.logLevel | quote }}
             - name: LOG_FORMAT
               value: {{ .Values.auth.logFormat | quote }}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
             - name: BOOTSTRAP_ADMIN_USERNAME
               value: {{ .Values.auth.bootstrapAdmin.username | quote }}
             - name: BOOTSTRAP_ADMIN_PASSWORD_SECRET
               value: "{{ include "crossplane-ui.fullname" . }}-bootstrap-admin"
-            - name: DEX_CONFIGMAP_NAME
-              value: "{{ include "crossplane-ui.fullname" . }}-dex-config"
+            - name: OIDC_CLIENT_ID
+              value: {{ .Values.oidc.clientID | quote }}
+            - name: OIDC_CLIENT_NAME
+              value: {{ default .Values.oidc.clientID .Values.oidc.clientName | quote }}
+            - name: OIDC_CLIENT_SECRET_NAME
+              value: {{ $oidcSecret | quote }}
+            - name: OIDC_CLIENT_SECRET_KEY
+              value: "clientSecret"
+            - name: OIDC_REDIRECT_URIS
+              value: {{ join "," $redirects | quote }}
+            - name: LEADER_ELECTION
+              value: "true"
           livenessProbe:
             httpGet:
               path: /healthz
