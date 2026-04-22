@@ -8,9 +8,9 @@ ones add Crossplane-specific functionality.
 | --------- | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
 | ~~M1~~ ✓  | Repository scaffolding, tooling, licensing, docs skeleton, CI skeleton.                               | `task lint test` green on a fresh clone.           |
 | ~~M2~~ ✓  | Gateway: Kubernetes client, OIDC middleware, impersonation, real Prometheus metrics.                  | `GET /api/v1/namespaces` serves live cluster data. |
-| **M3**    | Auth: `User` / `Group` CRDs, controller-runtime reconciler, bootstrap admin, bcrypt, Dex config sync. | `kubectl get users` works after `helm install`.    |
-| **M4**    | Helm polish + Dex wiring end-to-end (password DB connector from Auth).                                | `helm install` → login as admin succeeds.          |
-| **M5**    | UI: @rancher/components integration, Rancher-like shell (nav, topbar), login flow, session store.     | Browser login end-to-end; matches Rancher look.    |
+| ~~M3~~ ✓  | Auth: `User` / `Group` CRDs, controller-runtime reconciler, bootstrap admin, bcrypt, Dex config sync. | `kubectl get users` works after `helm install`.    |
+| ~~M4~~ ✓  | Helm polish + Dex wiring end-to-end (password DB connector from Auth).                                | `helm install` → login as admin succeeds.          |
+| ~~M5~~ ✓  | UI: OIDC PKCE login flow, Rancher-inspired shell (nav, topbar), session store, home namespaces list. | Browser login end-to-end; matches Rancher look.    |
 | **M6**    | Home dashboard: card/tile view of all Compositions/XRs/MRs with aggregated ready/sync status.         | Dashboard renders live status from kube.           |
 | **M7**    | List & detail views Rancher-like: YAML editor (monaco), apply/diff, delete, create from template.     | Full CRUD on Crossplane resources via UI.          |
 | **M8**    | Configuration (form) views for Composition, XR, Provider, Function, ProviderConfig.                   | Typed forms for the 5 most common kinds.           |
