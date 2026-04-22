@@ -34,12 +34,16 @@ variables:
   FF_USE_FASTZIP: "true"
 
 # Base cache keys for Go / pnpm / Helm. Jobs extend as needed.
+# GitLab CI limits cache.key.files to 2 entries, so we pick the two that
+# capture the most cache-invalidating changes: the gateway's go.sum (by
+# far the largest dependency set) and go.work (workspace topology and
+# toolchain version). When auth/pkg grow direct dependencies we can swap
+# one of the two or migrate to a computed key.
 .cache-go: &cache-go
   key:
     files:
       - services/gateway/go.sum
-      - services/auth/go.sum
-      - pkg/go.sum
+      - go.work
   paths:
     - .cache/go-build
     - .cache/go-mod
