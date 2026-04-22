@@ -1,0 +1,43 @@
+# Dex configuration for the local dev stack (compose/docker-compose.yml).
+#
+# NOT FOR PRODUCTION. Passwords and secrets below are hard-coded dev values.
+
+issuer: http://localhost:5556/dex
+
+storage:
+  type: memory
+
+web:
+  http: 0.0.0.0:5556
+  allowedOrigins: ["*"]
+
+oauth2:
+  skipApprovalScreen: true
+  responseTypes: ["code", "token", "id_token"]
+
+enablePasswordDB: true
+
+# Local test accounts. The `hash` field is bcrypt(password).
+# Credentials:
+#   admin@crossplane-ui.local  /  password
+#   viewer@crossplane-ui.local /  password
+staticPasswords:
+  - email: "admin@crossplane-ui.local"
+    hash: "$2a$10$2b2cu2KdwJCzdcQAEwB0v.qzATkqbBbEvUi9wYeVJsKXTS7SLeJ.e"
+    username: "admin"
+    userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
+  - email: "viewer@crossplane-ui.local"
+    hash: "$2a$10$2b2cu2KdwJCzdcQAEwB0v.qzATkqbBbEvUi9wYeVJsKXTS7SLeJ.e"
+    username: "viewer"
+    userID: "ad2f8f52-1ee2-4b4d-8f43-9f42e5710e03"
+
+# OIDC client for the gateway.
+# The secret below is shared with services via env vars in production; here it
+# is hard-coded because everything runs on the developer's machine.
+staticClients:
+  - id: crossplane-ui
+    name: "crossplane-ui gateway"
+    secret: "dev-secret-change-me"
+    redirectURIs:
+      - http://localhost:5173/auth/callback
+      - http://localhost:8080/api/v1/auth/callback

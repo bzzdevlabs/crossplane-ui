@@ -1,0 +1,145 @@
+# Local development stack for crossplane-ui.
+#
+# Orchestrated via `task dev:up` (see ../Taskfile.yml). The target is:
+#
+#   k3d cluster `crossplane-ui` (1 node, Crossplane v2 installed)
+#         ▲
+#         │ kubeconfig (./.kubeconfig, generated)
+#         │
+#   ┌─────┴──────┬──────────┬──────────┐
+#   │  gateway   │   auth   │   dex    │
+#   │   :8080    │   :8081  │  :5556   │
+#   └────────────┴──────────┴──────────┘
+#                                ▲
+#                         ┌──────┴──────┐
+#                         │   ui :5173  │
+#                         │ (vite dev)  │
+#                         └─────────────┘
+#
+# The compose network is `k3d-crossplane-ui`, shared with the k3d cluster so
+# services can reach the API server at https://k3d-crossplane-ui-server-0:6443.
+
+services:
+  dex:
+    image: dexidp/dex:v2.43.0
+    container_name: crossplane-ui-dex
+    command: ["dex", "serve", "/etc/dex/config.yaml"]
+    volumes:
+      - ./dex/config.yaml:/etc/dex/config.yaml:ro
+    ports:
+      - "${DEX_HOST_PORT:-5556}:5556"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5556/dex/.well-known/openid-configuration >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+    restart: unless-stopped
+
+  auth:
+    image: golang:1.26-alpine
+    container_name: crossplane-ui-auth
+    working_dir: /workspace/services/auth
+    environment:
+      HTTP_ADDR: ":8081"
+      LOG_LEVEL: debug
+      LOG_FORMAT: text
+      KUBECONFIG: /kubeconfig
+    volumes:
+      - ..:/workspace
+      - ./.kubeconfig:/kubeconfig:ro
+      - go-cache:/root/.cache/go-build
+      - go-mod:/go/pkg/mod
+    ports:
+      - "${AUTH_HOST_PORT:-8081}:8081"
+    command: ["go", "run", "./cmd"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8081/healthz >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 60s
+    restart: unless-stopped
+
+  gateway:
+    image: golang:1.26-alpine
+    container_name: crossplane-ui-gateway
+    working_dir: /workspace/services/gateway
+    environment:
+      HTTP_ADDR: ":8080"
+      LOG_LEVEL: debug
+      LOG_FORMAT: text
+      KUBECONFIG: /kubeconfig
+      # OIDC in compose runs in two URL modes: tokens carry
+      # issuer=http://localhost:5556/dex (browser view), but the gateway
+      # fetches the discovery document over the docker network.
+      # Leave OIDC_ISSUER_URL empty to run in dev pass-through for quick
+      # smoke tests (curl-friendly); set both URLs to enforce real auth.
+      OIDC_ISSUER_URL: "${OIDC_ISSUER_URL:-}"
+      OIDC_DISCOVERY_URL: "${OIDC_DISCOVERY_URL:-http://dex:5556/dex}"
+      OIDC_CLIENT_ID: "${OIDC_CLIENT_ID:-crossplane-ui}"
+      CORS_ALLOWED_ORIGINS: "http://localhost:${UI_HOST_PORT:-5173}"
+      AUTH_SERVICE_URL: http://auth:8081
+    volumes:
+      - ..:/workspace
+      - ./.kubeconfig:/kubeconfig:ro
+      - go-cache:/root/.cache/go-build
+      - go-mod:/go/pkg/mod
+    ports:
+      - "${GATEWAY_HOST_PORT:-8080}:8080"
+    depends_on:
+      auth:
+        condition: service_started
+      dex:
+        condition: service_healthy
+    command: ["go", "run", "./cmd"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 60s
+    restart: unless-stopped
+
+  ui:
+    image: node:22-alpine
+    container_name: crossplane-ui-ui
+    working_dir: /workspace/web/ui
+    environment:
+      VITE_PROXY_TARGET: http://gateway:8080
+      VITE_OIDC_ISSUER_URL: http://localhost:5556/dex
+      VITE_OIDC_CLIENT_ID: crossplane-ui
+    volumes:
+      - ..:/workspace
+      # Isolate node_modules so host (Linux) and container (Alpine) don't clash
+      # on native binaries (esbuild, rollup) that differ per libc.
+      - ui-node-modules:/workspace/web/ui/node_modules
+    ports:
+      - "${UI_HOST_PORT:-5173}:5173"
+    depends_on:
+      gateway:
+        condition: service_started
+    # corepack is no longer shipped in node:22; install pnpm via npm.
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        if ! command -v pnpm >/dev/null 2>&1; then
+          npm install -g pnpm@10.10.0
+        fi
+        pnpm install --prefer-frozen-lockfile
+        exec pnpm run dev --host 0.0.0.0 --port 5173
+    restart: unless-stopped
+
+networks:
+  # The k3d cluster creates this network. `task dev:up` ensures it exists
+  # before `docker compose up` is invoked.
+  default:
+    name: k3d-crossplane-ui
+    external: true
+
+volumes:
+  go-cache:
+  go-mod:
+  ui-node-modules:
