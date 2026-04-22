@@ -1,35 +1,137 @@
 import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
+import type { User as OidcUser } from 'oidc-client-ts';
+
+import { getUserManager, isAuthEnabled } from '@/services/oidc';
 
 export interface AuthUser {
+  readonly subject: string;
   readonly username: string;
   readonly displayName: string;
-  readonly groups: readonly string[];
   readonly email?: string;
+  readonly groups: readonly string[];
 }
 
-/**
- * useAuthStore holds the currently authenticated user and the ID token the
- * gateway must forward to the Kubernetes API for impersonation.
- *
- * The real OIDC flow against Dex is wired in milestone M4. Until then the
- * store only exposes the shape the rest of the app will consume.
- */
+interface Claims {
+  readonly sub?: string;
+  readonly preferred_username?: string;
+  readonly name?: string;
+  readonly email?: string;
+  readonly groups?: readonly string[];
+}
+
+function toAuthUser(u: OidcUser): AuthUser {
+  const claims = u.profile as Claims;
+  const username = claims.preferred_username ?? claims.email ?? claims.sub ?? 'user';
+  return {
+    subject: claims.sub ?? '',
+    username,
+    displayName: claims.name ?? username,
+    email: claims.email,
+    groups: claims.groups ?? [],
+  };
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<AuthUser | null>(null);
   const idToken = ref<string | null>(null);
+  const accessToken = ref<string | null>(null);
+  const ready = ref(false);
+  const devMode = ref(false);
 
-  const isAuthenticated = computed(() => user.value !== null && idToken.value !== null);
+  const isAuthenticated = computed(
+    () => devMode.value || (user.value !== null && idToken.value !== null),
+  );
 
-  function setSession(nextUser: AuthUser, token: string): void {
-    user.value = nextUser;
-    idToken.value = token;
+  function applyOidc(u: OidcUser | null): void {
+    if (u === null) {
+      user.value = null;
+      idToken.value = null;
+      accessToken.value = null;
+      return;
+    }
+    user.value = toAuthUser(u);
+    idToken.value = u.id_token ?? null;
+    accessToken.value = u.access_token ?? null;
+  }
+
+  /**
+   * Initialise the store from localStorage (if a previous session exists)
+   * and subscribe to silent-renew events. In dev pass-through mode the store
+   * is put into `devMode`, which bypasses every subsequent guard.
+   */
+  async function initialise(): Promise<void> {
+    if (ready.value) return;
+    try {
+      const enabled = await isAuthEnabled();
+      if (!enabled) {
+        devMode.value = true;
+        user.value = {
+          subject: 'dev',
+          username: 'dev-admin',
+          displayName: 'dev-admin',
+          email: 'dev-admin@local',
+          groups: ['system:masters'],
+        };
+        ready.value = true;
+        return;
+      }
+      const mgr = await getUserManager();
+      const existing = await mgr.getUser();
+      if (existing && !existing.expired) {
+        applyOidc(existing);
+      }
+      mgr.events.addUserLoaded((u) => applyOidc(u));
+      mgr.events.addUserUnloaded(() => applyOidc(null));
+      mgr.events.addAccessTokenExpired(() => applyOidc(null));
+    } finally {
+      ready.value = true;
+    }
+  }
+
+  async function signIn(redirect?: string): Promise<void> {
+    const mgr = await getUserManager();
+    await mgr.signinRedirect({ state: redirect ?? '/' });
+  }
+
+  async function completeSignIn(): Promise<string> {
+    const mgr = await getUserManager();
+    const u = await mgr.signinRedirectCallback();
+    applyOidc(u);
+    const state = typeof u.state === 'string' ? u.state : '/';
+    return state;
+  }
+
+  async function signOut(): Promise<void> {
+    if (devMode.value) {
+      // In dev mode the store is synthetic; nothing to clear.
+      return;
+    }
+    const mgr = await getUserManager();
+    try {
+      await mgr.signoutRedirect({ id_token_hint: idToken.value ?? undefined });
+    } catch {
+      // Dex may not advertise end_session_endpoint; fall back to local clear.
+      await mgr.removeUser();
+      applyOidc(null);
+    }
   }
 
   function clear(): void {
-    user.value = null;
-    idToken.value = null;
+    applyOidc(null);
   }
 
-  return { user, idToken, isAuthenticated, setSession, clear };
+  return {
+    user,
+    idToken,
+    accessToken,
+    ready,
+    devMode,
+    isAuthenticated,
+    initialise,
+    signIn,
+    completeSignIn,
+    signOut,
+    clear,
+  };
 });
