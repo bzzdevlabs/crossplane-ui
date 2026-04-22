@@ -35,9 +35,11 @@ staticPasswords:
 # The secret below is shared with services via env vars in production; here it
 # is hard-coded because everything runs on the developer's machine.
 staticClients:
+  # PKCE public client; matches the OAuth2Client CR the auth service writes
+  # to Dex in-cluster (see services/auth/internal/dex/oauth2client.go).
   - id: crossplane-ui
     name: "crossplane-ui gateway"
-    secret: "dev-secret-change-me"
+    public: true
     redirectURIs:
       - http://localhost:5173/auth/callback
       - http://localhost:8080/api/v1/auth/callback

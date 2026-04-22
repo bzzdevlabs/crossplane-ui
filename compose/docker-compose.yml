@@ -118,7 +118,7 @@ services:
       - "${UI_HOST_PORT:-5173}:5173"
     depends_on:
       gateway:
-        condition: service_started
+        condition: service_healthy
     # corepack is no longer shipped in node:22; install pnpm via npm.
     command:
       - sh
