@@ -1,0 +1,54 @@
+{
+  "app": {
+    "title": "crossplane-ui",
+    "subtitle": "Admin UI for Crossplane v2"
+  },
+  "nav": {
+    "home": "Home",
+    "compositions": "Compositions",
+    "composites": "Composite resources",
+    "managed": "Managed resources",
+    "providers": "Providers",
+    "functions": "Functions",
+    "settings": "Settings",
+    "users": "Users"
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "username": "Username",
+      "password": "Password",
+      "submit": "Sign in",
+      "sso": "Sign in with SSO",
+      "invalidCredentials": "Invalid username or password.",
+      "tooManyAttempts": "Too many attempts. Please wait before retrying."
+    },
+    "logout": "Sign out"
+  },
+  "home": {
+    "heading": "Deployed Crossplane resources",
+    "empty": "No Crossplane resources found in this cluster yet.",
+    "loading": "Loading resources…"
+  },
+  "status": {
+    "ready": "Ready",
+    "notReady": "Not ready",
+    "synced": "Synced",
+    "outOfSync": "Out of sync",
+    "unknown": "Unknown"
+  },
+  "notFound": {
+    "heading": "Page not found",
+    "message": "The page you are looking for does not exist.",
+    "backHome": "Back to home"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "apply": "Apply",
+    "retry": "Retry"
+  }
+}

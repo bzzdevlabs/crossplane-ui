@@ -1,0 +1,73 @@
+/*
+ * Design tokens. These are temporary values that will be replaced in M5 by the
+ * Rancher component library's tokens once @rancher/components is wired in.
+ */
+:root {
+  color-scheme: light dark;
+
+  --color-bg: #f7f8fa;
+  --color-surface: #fff;
+  --color-surface-alt: #f2f4f7;
+  --color-border: #e2e5ea;
+  --color-text: #1f2328;
+  --color-text-muted: #5f6773;
+  --color-accent: #2e4fd9;
+  --color-accent-subtle: #e7ecff;
+  --color-on-accent: #fff;
+  --color-danger: #c0392b;
+
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0f1419;
+    --color-surface: #161c23;
+    --color-surface-alt: #1e252e;
+    --color-border: #2a313b;
+    --color-text: #e7ecf1;
+    --color-text-muted: #9aa4b1;
+    --color-accent: #6c8cff;
+    --color-accent-subtle: #1f2a52;
+    --color-on-accent: #0f1419;
+    --color-danger: #ff6b5e;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+}
+
+a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

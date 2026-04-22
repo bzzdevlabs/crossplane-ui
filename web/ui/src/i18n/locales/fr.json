@@ -1,0 +1,54 @@
+{
+  "app": {
+    "title": "crossplane-ui",
+    "subtitle": "Interface d'administration pour Crossplane v2"
+  },
+  "nav": {
+    "home": "Accueil",
+    "compositions": "Compositions",
+    "composites": "Ressources composites",
+    "managed": "Ressources managées",
+    "providers": "Providers",
+    "functions": "Fonctions",
+    "settings": "Paramètres",
+    "users": "Utilisateurs"
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "username": "Identifiant",
+      "password": "Mot de passe",
+      "submit": "Se connecter",
+      "sso": "Connexion via SSO",
+      "invalidCredentials": "Identifiant ou mot de passe invalide.",
+      "tooManyAttempts": "Trop de tentatives. Veuillez patienter avant de réessayer."
+    },
+    "logout": "Déconnexion"
+  },
+  "home": {
+    "heading": "Ressources Crossplane déployées",
+    "empty": "Aucune ressource Crossplane détectée dans ce cluster.",
+    "loading": "Chargement des ressources…"
+  },
+  "status": {
+    "ready": "Prêt",
+    "notReady": "Non prêt",
+    "synced": "Synchronisé",
+    "outOfSync": "Désynchronisé",
+    "unknown": "Inconnu"
+  },
+  "notFound": {
+    "heading": "Page introuvable",
+    "message": "La page demandée n'existe pas.",
+    "backHome": "Retour à l'accueil"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "apply": "Appliquer",
+    "retry": "Réessayer"
+  }
+}
