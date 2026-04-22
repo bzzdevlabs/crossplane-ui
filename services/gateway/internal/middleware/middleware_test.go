@@ -23,7 +23,7 @@ func TestRequestIDGeneratesWhenAbsent(t *testing.T) {
 	}))
 
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 
 	if captured == "" {
 		t.Fatal("expected request id in context")
@@ -42,7 +42,7 @@ func TestRequestIDPropagatesWhenProvided(t *testing.T) {
 		captured = middleware.RequestIDFrom(r.Context())
 	}))
 
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set(middleware.HeaderRequestID, "client-supplied-id")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -63,7 +63,7 @@ func TestRecoverTurnsPanicIntoInternalError(t *testing.T) {
 	}))
 
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("status = %d, want 500", rec.Code)
@@ -76,11 +76,12 @@ func TestRecoverTurnsPanicIntoInternalError(t *testing.T) {
 func TestCORSAllowsConfiguredOrigin(t *testing.T) {
 	t.Parallel()
 
-	h := middleware.CORS([]string{"http://localhost:5173"})(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	inner := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-	}))
+	})
+	h := middleware.CORS([]string{"http://localhost:5173"})(inner)
 
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Origin", "http://localhost:5173")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -93,11 +94,12 @@ func TestCORSAllowsConfiguredOrigin(t *testing.T) {
 func TestCORSRejectsUnknownOrigin(t *testing.T) {
 	t.Parallel()
 
-	h := middleware.CORS([]string{"http://localhost:5173"})(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	inner := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
-	}))
+	})
+	h := middleware.CORS([]string{"http://localhost:5173"})(inner)
 
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Origin", "https://evil.example.com")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -143,7 +145,7 @@ func TestMetricsInstrumentsRequest(t *testing.T) {
 	}))
 
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest("POST", "/x", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/x", nil))
 
 	counter, err := reqCtr.GetMetricWithLabelValues("POST", "/x", "201")
 	if err != nil {

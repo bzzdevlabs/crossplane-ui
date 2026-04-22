@@ -73,7 +73,10 @@ linters:
   settings:
     errcheck:
       check-type-assertions: true
-      check-blank: true
+      # check-blank flags every `_ =`, which is idiomatic for
+      # http.ResponseWriter.Write / json.Encoder.Encode — we accept the
+      # mute there. Keep check-type-assertions on to catch unsafe casts.
+      check-blank: false
     errorlint:
       errorf: true
       asserts: true
@@ -89,6 +92,7 @@ linters:
       disabled-checks:
         - whyNoLint        # covered by nolintlint
         - importShadow     # too noisy with k8s.io/api
+        - httpNoBody       # pedantic for httptest.NewRequest(..., nil)
     gocyclo:
       min-complexity: 15
     gosec:

@@ -2,6 +2,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -61,7 +62,7 @@ func (c *Config) validate() error {
 		return fmt.Errorf("invalid LOG_FORMAT %q (allowed: json, text)", c.LogFormat)
 	}
 	if c.HTTPAddr == "" {
-		return fmt.Errorf("HTTP_ADDR must not be empty")
+		return errors.New("HTTP_ADDR must not be empty")
 	}
 	return nil
 }

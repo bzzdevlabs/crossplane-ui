@@ -1,7 +1,7 @@
 package kube
 
 import (
-	"fmt"
+	"errors"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -27,7 +27,7 @@ func NewClientFactory(base *rest.Config) *ClientFactory {
 // a fake client for tests.
 func (f *ClientFactory) For(user string, groups []string) (kubernetes.Interface, error) {
 	if user == "" {
-		return nil, fmt.Errorf("kube impersonation: empty user")
+		return nil, errors.New("kube impersonation: empty user")
 	}
 	cfg := rest.CopyConfig(f.base)
 	cfg.Impersonate = rest.ImpersonationConfig{

@@ -58,7 +58,8 @@ func NamespacesHandler(logger *slog.Logger, factory ClientFactory) http.Handler 
 		}
 
 		out := make([]Namespace, 0, len(list.Items))
-		for _, ns := range list.Items {
+		for i := range list.Items {
+			ns := &list.Items[i]
 			out = append(out, Namespace{
 				Name:              ns.Name,
 				Phase:             string(ns.Status.Phase),

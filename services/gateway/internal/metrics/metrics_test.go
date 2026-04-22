@@ -2,6 +2,7 @@ package metrics_test
 
 import (
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -17,7 +18,7 @@ func TestRegistryExposesExpectedMetrics(t *testing.T) {
 	reg.HTTPDuration.WithLabelValues("GET", "/healthz").Observe(0.01)
 	reg.KubeAPIRequests.WithLabelValues("list", "namespaces", "200").Inc()
 
-	req := httptest.NewRequest("GET", "/metrics", nil)
+	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	rec := httptest.NewRecorder()
 	reg.Handler().ServeHTTP(rec, req)
 

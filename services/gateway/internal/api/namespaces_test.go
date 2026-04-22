@@ -43,7 +43,7 @@ func TestNamespacesHandlerRejectsWithoutUser(t *testing.T) {
 
 	h := api.NamespacesHandler(newLogger(), &fakeFactory{})
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest("GET", "/api/v1/namespaces", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v1/namespaces", nil))
 
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("status = %d, want 401", rec.Code)
@@ -65,7 +65,7 @@ func TestNamespacesHandlerReturnsProjectedList(t *testing.T) {
 	factory := &fakeFactory{client: client}
 
 	h := api.NamespacesHandler(newLogger(), factory)
-	req := httptest.NewRequest("GET", "/api/v1/namespaces", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/namespaces", nil)
 	ctx := oidc.WithUser(req.Context(), oidc.User{
 		Subject:           "abc",
 		PreferredUsername: "alice",
@@ -98,7 +98,7 @@ func TestNamespacesHandlerFactoryFailure(t *testing.T) {
 	factory := &fakeFactory{err: errors.New("boom")}
 	h := api.NamespacesHandler(newLogger(), factory)
 
-	req := httptest.NewRequest("GET", "/api/v1/namespaces", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/namespaces", nil)
 	ctx := oidc.WithUser(req.Context(), oidc.User{Subject: "abc", PreferredUsername: "alice"})
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req.WithContext(ctx))

@@ -34,7 +34,6 @@ const (
 
 func main() {
 	if err := run(); err != nil {
-		//nolint:sloglint // the logger may not be initialised yet.
 		fmt.Fprintf(os.Stderr, "fatal: %v\n", err)
 		os.Exit(1)
 	}

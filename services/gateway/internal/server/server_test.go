@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"context"
+	"errors"
 	"io"
 	"log/slog"
 	"net"
@@ -17,11 +18,18 @@ import (
 	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/server"
 )
 
+// errNopFactoryNotWired is returned by the test-only factory. Tests in this
+// package drive operational endpoints that never invoke it; the error
+// surfaces only if the test topology accidentally routes through /api/v1/*.
+var errNopFactoryNotWired = errors.New("nop client factory is not wired in this test")
+
 // nopFactory satisfies api.ClientFactory; unit tests in this package do not
 // exercise any /api/v1/* route, so the factory is never actually invoked.
 type nopFactory struct{}
 
-func (nopFactory) For(string, []string) (kubernetes.Interface, error) { return nil, nil }
+func (nopFactory) For(string, []string) (kubernetes.Interface, error) {
+	return nil, errNopFactoryNotWired
+}
 
 // newTestServer starts a Server on an ephemeral port and returns its base URL
 // along with a cleanup function that shuts it down.
@@ -79,7 +87,7 @@ func TestHealthzReturnsOK(t *testing.T) {
 	base, shutdown := newTestServer(t)
 	t.Cleanup(shutdown)
 
-	resp, err := http.Get(base + "/healthz") //nolint:noctx // simple test
+	resp, err := http.Get(base + "/healthz")
 	if err != nil {
 		t.Fatalf("GET /healthz: %v", err)
 	}
@@ -95,7 +103,7 @@ func TestReadyzReturnsOK(t *testing.T) {
 	base, shutdown := newTestServer(t)
 	t.Cleanup(shutdown)
 
-	resp, err := http.Get(base + "/readyz") //nolint:noctx // simple test
+	resp, err := http.Get(base + "/readyz")
 	if err != nil {
 		t.Fatalf("GET /readyz: %v", err)
 	}
@@ -111,7 +119,7 @@ func TestMetricsExposesPrometheusText(t *testing.T) {
 	base, shutdown := newTestServer(t)
 	t.Cleanup(shutdown)
 
-	resp, err := http.Get(base + "/metrics") //nolint:noctx // simple test
+	resp, err := http.Get(base + "/metrics")
 	if err != nil {
 		t.Fatalf("GET /metrics: %v", err)
 	}

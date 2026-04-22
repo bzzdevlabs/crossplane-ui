@@ -11,15 +11,16 @@ import (
 func Recover(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := r.Context()
 			defer func() {
 				rec := recover()
 				if rec == nil {
 					return
 				}
-				logger.ErrorContext(r.Context(), "panic in http handler",
+				logger.ErrorContext(ctx, "panic in http handler",
 					slog.Any("panic", rec),
 					slog.String("stack", string(debug.Stack())),
-					slog.String("request_id", RequestIDFrom(r.Context())),
+					slog.String("request_id", RequestIDFrom(ctx)),
 				)
 				http.Error(w, `{"error":"internal_server_error"}`, http.StatusInternalServerError)
 			}()

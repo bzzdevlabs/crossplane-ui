@@ -60,7 +60,7 @@ func TestHealthzReturnsOK(t *testing.T) {
 	base, shutdown := newTestServer(t)
 	t.Cleanup(shutdown)
 
-	resp, err := http.Get(base + "/healthz") //nolint:noctx // simple test
+	resp, err := http.Get(base + "/healthz")
 	if err != nil {
 		t.Fatalf("GET /healthz: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestReadyzReturnsOK(t *testing.T) {
 	base, shutdown := newTestServer(t)
 	t.Cleanup(shutdown)
 
-	resp, err := http.Get(base + "/readyz") //nolint:noctx // simple test
+	resp, err := http.Get(base + "/readyz")
 	if err != nil {
 		t.Fatalf("GET /readyz: %v", err)
 	}

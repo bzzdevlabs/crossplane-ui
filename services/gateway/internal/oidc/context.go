@@ -24,7 +24,7 @@ type User struct {
 // gateway's Kubernetes client. We prefer the preferred username when
 // present, fall back to the email, and finally to the opaque subject so
 // that RoleBindings authored against any of those three shapes keep working.
-func (u User) Kubernetes() (string, []string) {
+func (u User) Kubernetes() (name string, groups []string) {
 	switch {
 	case u.PreferredUsername != "":
 		return u.PreferredUsername, u.Groups

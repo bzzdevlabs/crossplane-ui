@@ -42,7 +42,7 @@ func TestMiddlewareRejectsMissingToken(t *testing.T) {
 	}))
 
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("status = %d, want 401", rec.Code)
@@ -62,7 +62,7 @@ func TestMiddlewareRejectsInvalidToken(t *testing.T) {
 		t.Fatal("handler reached despite invalid token")
 	}))
 
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer bad-token")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -75,7 +75,10 @@ func TestMiddlewareRejectsInvalidToken(t *testing.T) {
 func TestMiddlewareInjectsUserOnSuccess(t *testing.T) {
 	t.Parallel()
 
-	payload := []byte(`{"sub":"abc","email":"alice@example.com","preferred_username":"alice","groups":["admins","devs"]}`)
+	payload := []byte(
+		`{"sub":"abc","email":"alice@example.com",` +
+			`"preferred_username":"alice","groups":["admins","devs"]}`,
+	)
 	v := &fakeVerifier{
 		verify: func(_ context.Context, _ string) (gwoidc.IDToken, error) {
 			return &fakeIDToken{payload: payload}, nil
@@ -93,7 +96,7 @@ func TestMiddlewareInjectsUserOnSuccess(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	req := httptest.NewRequest("GET", "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	req.Header.Set("Authorization", "Bearer token")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
@@ -125,7 +128,7 @@ func TestDevPassthroughInjectsAdminUser(t *testing.T) {
 	}))
 
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 
 	if got.PreferredUsername != "dev-admin" {
 		t.Errorf("dev user = %q, want dev-admin", got.PreferredUsername)
