@@ -11,24 +11,48 @@
     "providers": "Providers",
     "functions": "Fonctions",
     "settings": "Paramètres",
-    "users": "Utilisateurs"
+    "users": "Utilisateurs",
+    "sections": {
+      "cluster": "Cluster",
+      "crossplane": "Crossplane",
+      "administration": "Administration"
+    }
   },
   "auth": {
     "login": {
       "title": "Connexion",
+      "intro": "Connectez-vous avec votre fournisseur d'identité pour accéder au cluster.",
+      "submit": "Se connecter via Dex",
+      "devContinue": "Continuer (mode dev)",
+      "sso": "Connexion via SSO",
       "username": "Identifiant",
       "password": "Mot de passe",
-      "submit": "Se connecter",
-      "sso": "Connexion via SSO",
       "invalidCredentials": "Identifiant ou mot de passe invalide.",
       "tooManyAttempts": "Trop de tentatives. Veuillez patienter avant de réessayer."
+    },
+    "callback": {
+      "processing": "Connexion en cours…",
+      "failed": "Échec de la connexion.",
+      "retry": "Retour à la connexion"
     },
     "logout": "Déconnexion"
   },
   "home": {
-    "heading": "Ressources Crossplane déployées",
-    "empty": "Aucune ressource Crossplane détectée dans ce cluster.",
-    "loading": "Chargement des ressources…"
+    "heading": "Vue d'ensemble Crossplane",
+    "empty": "Aucune ressource Crossplane visible avec les droits courants.",
+    "emptyCategory": "Aucune ressource dans cette catégorie.",
+    "loading": "Chargement des ressources…",
+    "namespacesHeading": "Namespaces",
+    "namespacesHint": "Données en temps réel depuis {cluster}, filtrées par votre RBAC Kubernetes.",
+    "crossplaneHint": "Vue agrégée des Compositions, Composite Resources, Managed Resources, Providers et Fonctions. Filtrée par votre RBAC Kubernetes.",
+    "categories": {
+      "composition": "Compositions",
+      "composite": "Composite resources",
+      "managed": "Ressources managées",
+      "provider": "Providers",
+      "function": "Fonctions"
+    },
+    "refresh": "Rafraîchir"
   },
   "status": {
     "ready": "Prêt",
@@ -49,6 +73,8 @@
     "edit": "Modifier",
     "create": "Créer",
     "apply": "Appliquer",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "error": "Erreur",
+    "gateway": "Passerelle"
   }
 }

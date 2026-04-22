@@ -11,24 +11,48 @@
     "providers": "Providers",
     "functions": "Functions",
     "settings": "Settings",
-    "users": "Users"
+    "users": "Users",
+    "sections": {
+      "cluster": "Cluster",
+      "crossplane": "Crossplane",
+      "administration": "Administration"
+    }
   },
   "auth": {
     "login": {
       "title": "Sign in",
+      "intro": "Sign in with your identity provider to access the cluster.",
+      "submit": "Sign in with Dex",
+      "devContinue": "Continue (dev mode)",
+      "sso": "Sign in with SSO",
       "username": "Username",
       "password": "Password",
-      "submit": "Sign in",
-      "sso": "Sign in with SSO",
       "invalidCredentials": "Invalid username or password.",
       "tooManyAttempts": "Too many attempts. Please wait before retrying."
+    },
+    "callback": {
+      "processing": "Signing you in…",
+      "failed": "Sign-in failed.",
+      "retry": "Back to sign in"
     },
     "logout": "Sign out"
   },
   "home": {
-    "heading": "Deployed Crossplane resources",
-    "empty": "No Crossplane resources found in this cluster yet.",
-    "loading": "Loading resources…"
+    "heading": "Crossplane overview",
+    "empty": "No Crossplane resources visible with the current credentials.",
+    "emptyCategory": "No resources in this category yet.",
+    "loading": "Loading resources…",
+    "namespacesHeading": "Namespaces",
+    "namespacesHint": "Live from {cluster}; filtered by your Kubernetes RBAC.",
+    "crossplaneHint": "Aggregated view of Compositions, Composite Resources, Managed Resources, Providers and Functions. Filtered by your Kubernetes RBAC.",
+    "categories": {
+      "composition": "Compositions",
+      "composite": "Composite resources",
+      "managed": "Managed resources",
+      "provider": "Providers",
+      "function": "Functions"
+    },
+    "refresh": "Refresh"
   },
   "status": {
     "ready": "Ready",
@@ -49,6 +73,8 @@
     "edit": "Edit",
     "create": "Create",
     "apply": "Apply",
-    "retry": "Retry"
+    "retry": "Retry",
+    "error": "Error",
+    "gateway": "Gateway"
   }
 }
