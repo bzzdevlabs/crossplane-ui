@@ -30,6 +30,13 @@ type Deps struct {
 	// (injecting a synthetic user) so downstream handlers always find a user
 	// in context.
 	AuthMiddleware func(http.Handler) http.Handler
+	// CrossplaneFactory builds impersonated dynamic + discovery clients used
+	// by the Crossplane dashboard endpoints. Optional; nil disables the
+	// /api/v1/crossplane/* routes.
+	CrossplaneFactory api.CrossplaneFactory
+	// Version is the gateway's build tag, surfaced via /api/v1/config so the
+	// UI can show it and pin against mismatched clients.
+	Version string
 }
 
 // Server is the gateway HTTP server.
@@ -82,10 +89,18 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.http.Shutdown(ctx)
 }
 
-// registerAPI mounts the /api/v1/* routes behind the auth middleware.
+// registerAPI mounts the /api/v1/* routes. The public config endpoint is
+// exposed without auth (the UI fetches it at boot to configure OIDC); every
+// other route sits behind the auth middleware.
 func (s *Server) registerAPI(mux *http.ServeMux) {
+	mux.Handle("/api/v1/config", api.ConfigHandler(s.deps.Logger, s.deps.Config, s.deps.Version))
+
 	apiMux := http.NewServeMux()
 	apiMux.Handle("/api/v1/namespaces", api.NamespacesHandler(s.deps.Logger, s.deps.ClientFactory))
+	if s.deps.CrossplaneFactory != nil {
+		apiMux.Handle("/api/v1/crossplane/resources",
+			api.CrossplaneResourcesHandler(s.deps.Logger, s.deps.CrossplaneFactory))
+	}
 
 	mux.Handle("/api/v1/", s.deps.AuthMiddleware(apiMux))
 }

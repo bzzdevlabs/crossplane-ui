@@ -70,11 +70,13 @@ func run() error {
 	}
 
 	srv := server.New(server.Deps{
-		Logger:         logger,
-		Config:         cfg,
-		Registry:       reg,
-		ClientFactory:  factory,
-		AuthMiddleware: authMW,
+		Logger:            logger,
+		Config:            cfg,
+		Registry:          reg,
+		ClientFactory:     factory,
+		CrossplaneFactory: factory,
+		AuthMiddleware:    authMW,
+		Version:           buildinfo.Version,
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
