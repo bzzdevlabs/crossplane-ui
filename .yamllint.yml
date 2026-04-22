@@ -1,0 +1,30 @@
+extends: default
+
+rules:
+  line-length:
+    max: 160
+    level: warning
+  document-start: disable
+  truthy:
+    level: warning
+    check-keys: false
+  comments:
+    min-spaces-from-content: 1
+  indentation:
+    indent-sequences: consistent
+  braces:
+    max-spaces-inside: 1
+  brackets:
+    max-spaces-inside: 1
+  # Helm templates + Taskfile use YAML with go-template delimiters.
+  # Accept them as-is.
+  empty-lines:
+    max: 2
+
+ignore: |
+  web/ui/node_modules/
+  web/ui/dist/
+  deploy/helm/**/charts/
+  deploy/helm/**/templates/
+  dist/
+  .cache/

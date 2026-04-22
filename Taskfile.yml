@@ -1,0 +1,359 @@
+# Taskfile — https://taskfile.dev
+# This file is the single source of truth for local dev commands. CI invokes
+# the same tasks so that `task lint test build` runs identically on every
+# machine.
+version: "3"
+
+vars:
+  PROJECT: crossplane-ui
+  GO_MODULES:
+    sh: find services pkg -maxdepth 2 -name go.mod -printf '%h\n'
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo "dev"
+  COMMIT:
+    sh: git rev-parse --short HEAD 2>/dev/null || echo "unknown"
+  BUILD_DATE:
+    sh: date -u +%Y-%m-%dT%H:%M:%SZ
+  LDFLAGS:
+    sh: |
+      echo "-s -w \
+        -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/{{.PROJECT}}/services/gateway/internal/buildinfo.Version={{.VERSION}} \
+        -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/{{.PROJECT}}/services/gateway/internal/buildinfo.Commit={{.COMMIT}} \
+        -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/{{.PROJECT}}/services/gateway/internal/buildinfo.Date={{.BUILD_DATE}}"
+  REGISTRY: '{{.REGISTRY | default "registry.gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui"}}'
+
+tasks:
+  # -------------------------------------------------------------------------
+  # Bootstrapping / environment
+  # -------------------------------------------------------------------------
+  bootstrap:
+    desc: Install dev dependencies (Go tools, pnpm, pre-commit hooks).
+    cmds:
+      - corepack enable
+      - pnpm --dir web/ui install --frozen-lockfile=false
+      - go install mvdan.cc/gofumpt@latest
+      - go install golang.org/x/tools/cmd/goimports@latest
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+      - go install honnef.co/go/tools/cmd/staticcheck@latest
+      - pre-commit install --install-hooks || true
+      - echo "✓ ready — try 'task dev'"
+
+  # -------------------------------------------------------------------------
+  # Linting
+  # -------------------------------------------------------------------------
+  lint:
+    desc: Run every linter.
+    deps: [lint:go, lint:ui, lint:helm, lint:yaml]
+
+  lint:go:
+    desc: golangci-lint across Go modules.
+    cmds:
+      - for: { var: GO_MODULES }
+        cmd: |
+          echo "→ golangci-lint in {{.ITEM}}"
+          cd {{.ITEM}} && golangci-lint run ./...
+
+  lint:ui:
+    desc: ESLint + Stylelint for the Vue app.
+    dir: web/ui
+    cmds:
+      - pnpm run lint
+
+  lint:helm:
+    desc: helm lint + kubeconform.
+    cmds:
+      - helm lint deploy/helm/crossplane-ui
+      - cmd: |
+          if command -v kubeconform >/dev/null 2>&1; then
+            helm template crossplane-ui deploy/helm/crossplane-ui --namespace crossplane-ui \
+              | kubeconform -strict -summary -schema-location default \
+                  -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{`{{.Group}}`}}/{{`{{.ResourceKind}}`}}_{{`{{.ResourceAPIVersion}}`}}.json' -
+          else
+            echo "kubeconform not installed — skipping"
+          fi
+
+  lint:yaml:
+    desc: yamllint over repo.
+    cmds:
+      - cmd: |
+          if command -v yamllint >/dev/null 2>&1; then
+            yamllint .
+          else
+            echo "yamllint not installed — skipping"
+          fi
+
+  # -------------------------------------------------------------------------
+  # Formatting
+  # -------------------------------------------------------------------------
+  fmt:
+    desc: Run every formatter in place.
+    deps: [fmt:go, fmt:ui]
+
+  fmt:go:
+    cmds:
+      - for: { var: GO_MODULES }
+        cmd: cd {{.ITEM}} && gofumpt -w . && goimports -w .
+
+  fmt:ui:
+    dir: web/ui
+    cmds:
+      - pnpm run format
+
+  # -------------------------------------------------------------------------
+  # Testing
+  # -------------------------------------------------------------------------
+  test:
+    desc: Run every test suite.
+    deps: [test:go, test:ui]
+
+  test:go:
+    desc: go test with race + coverage across modules.
+    cmds:
+      - for: { var: GO_MODULES }
+        cmd: |
+          echo "→ go test in {{.ITEM}}"
+          cd {{.ITEM}} && go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
+
+  test:ui:
+    dir: web/ui
+    cmds:
+      - pnpm run test
+
+  test:coverage:
+    desc: Print coverage percentages per module.
+    deps: [test:go]
+    cmds:
+      - for: { var: GO_MODULES }
+        cmd: |
+          [ -f "{{.ITEM}}/coverage.txt" ] && \
+            echo -n "{{.ITEM}}: " && \
+            cd {{.ITEM}} && go tool cover -func=coverage.txt | tail -1
+
+  # -------------------------------------------------------------------------
+  # Building
+  # -------------------------------------------------------------------------
+  build:
+    desc: Build all binaries and the UI bundle.
+    deps: [build:gateway, build:auth, build:ui]
+
+  build:gateway:
+    cmds:
+      - mkdir -p bin
+      - cd services/gateway && CGO_ENABLED=0 go build -trimpath -ldflags "{{.LDFLAGS}}" -o ../../bin/gateway ./cmd
+
+  build:auth:
+    cmds:
+      - mkdir -p bin
+      - cd services/auth && CGO_ENABLED=0 go build -trimpath -ldflags "{{.LDFLAGS}}" -o ../../bin/auth ./cmd
+
+  build:ui:
+    dir: web/ui
+    cmds:
+      - pnpm run build
+
+  # -------------------------------------------------------------------------
+  # Dev servers
+  # -------------------------------------------------------------------------
+  dev:
+    desc: Run gateway + auth + vite dev server concurrently.
+    deps: [dev:gateway, dev:auth, dev:ui]
+
+  dev:gateway:
+    env:
+      LOG_LEVEL: debug
+      LOG_FORMAT: text
+    cmds:
+      - cd services/gateway && go run ./cmd
+
+  dev:auth:
+    env:
+      LOG_LEVEL: debug
+      LOG_FORMAT: text
+    cmds:
+      - cd services/auth && go run ./cmd
+
+  dev:ui:
+    dir: web/ui
+    cmds:
+      - pnpm run dev
+
+  # -------------------------------------------------------------------------
+  # Images
+  # -------------------------------------------------------------------------
+  images:
+    desc: Build container images for gateway and auth.
+    deps: [images:gateway, images:auth]
+
+  images:gateway:
+    cmds:
+      - docker build --build-arg VERSION={{.VERSION}} --build-arg COMMIT={{.COMMIT}} --build-arg BUILD_DATE={{.BUILD_DATE}}
+          -t {{.REGISTRY}}/gateway:{{.VERSION}}
+          -t {{.REGISTRY}}/gateway:latest
+          -f services/gateway/Dockerfile services/gateway
+
+  images:auth:
+    cmds:
+      - docker build --build-arg VERSION={{.VERSION}} --build-arg COMMIT={{.COMMIT}} --build-arg BUILD_DATE={{.BUILD_DATE}}
+          -t {{.REGISTRY}}/auth:{{.VERSION}}
+          -t {{.REGISTRY}}/auth:latest
+          -f services/auth/Dockerfile services/auth
+
+  images:push:
+    desc: Push images to {{.REGISTRY}}.
+    deps: [images]
+    cmds:
+      - docker push {{.REGISTRY}}/gateway:{{.VERSION}}
+      - docker push {{.REGISTRY}}/gateway:latest
+      - docker push {{.REGISTRY}}/auth:{{.VERSION}}
+      - docker push {{.REGISTRY}}/auth:latest
+
+  # -------------------------------------------------------------------------
+  # Helm
+  # -------------------------------------------------------------------------
+  chart:dep:
+    desc: helm dependency update.
+    cmds:
+      - helm dependency update deploy/helm/crossplane-ui
+
+  chart:lint:
+    desc: helm lint.
+    cmds:
+      - helm lint deploy/helm/crossplane-ui
+
+  chart:template:
+    desc: helm template → /tmp/crossplane-ui.rendered.yaml.
+    cmds:
+      - helm template crossplane-ui deploy/helm/crossplane-ui --namespace crossplane-ui
+          > /tmp/crossplane-ui.rendered.yaml
+      - echo "→ /tmp/crossplane-ui.rendered.yaml"
+
+  chart:package:
+    desc: Package the chart into dist/.
+    deps: [chart:dep]
+    cmds:
+      - mkdir -p dist
+      - helm package deploy/helm/crossplane-ui --destination dist
+
+  # -------------------------------------------------------------------------
+  # Local dev stack — k3d (K8s + Crossplane) + docker compose (our services)
+  # -------------------------------------------------------------------------
+  dev:up:
+    desc: Start the full local dev stack (k3d + Crossplane + compose services).
+    cmds:
+      - task: dev:cluster
+      - task: dev:crossplane
+      - task: dev:kubeconfig
+      - task: dev:compose
+      - |
+        echo ""
+        echo "✓ UI      → http://localhost:5173"
+        echo "✓ API     → http://localhost:8080/healthz"
+        echo "✓ Dex     → http://localhost:5556/dex/.well-known/openid-configuration"
+        echo "✓ K8s API → run:  eval \$(task dev:kubeconfig:export)"
+        echo ""
+
+  dev:down:
+    desc: Stop compose services (keeps the k3d cluster running).
+    dir: compose
+    cmds:
+      - docker compose down
+
+  dev:reset:
+    desc: Destroy everything — compose volumes and the k3d cluster.
+    cmds:
+      - (cd compose && docker compose down -v) || true
+      - k3d cluster delete crossplane-ui || true
+      - rm -f compose/.kubeconfig
+
+  dev:logs:
+    desc: Follow logs from the compose services.
+    dir: compose
+    cmds:
+      - docker compose logs -f
+
+  dev:cluster:
+    desc: Create the local k3d cluster (idempotent).
+    internal: true
+    cmds:
+      - |
+        if ! k3d cluster list crossplane-ui >/dev/null 2>&1; then
+          echo "→ creating k3d cluster 'crossplane-ui'"
+          k3d cluster create crossplane-ui \
+            --agents 0 \
+            --api-port 127.0.0.1:6443 \
+            --k3s-arg '--disable=traefik@server:*' \
+            --k3s-arg '--disable=servicelb@server:*' \
+            --wait
+        else
+          echo "✓ k3d cluster 'crossplane-ui' already exists"
+        fi
+
+  dev:crossplane:
+    desc: Install (or upgrade) Crossplane v2 into the k3d cluster.
+    internal: true
+    env:
+      KUBECONFIG:
+        sh: k3d kubeconfig write crossplane-ui
+    cmds:
+      - helm repo add crossplane-stable https://charts.crossplane.io/stable --force-update >/dev/null
+      - helm repo update crossplane-stable >/dev/null
+      - |
+        helm upgrade --install crossplane crossplane-stable/crossplane \
+          --create-namespace --namespace crossplane-system \
+          --version 2.2.0 \
+          --wait --timeout=5m
+      - echo "✓ Crossplane v2.2 ready in crossplane-system"
+
+  dev:kubeconfig:
+    desc: Generate compose/.kubeconfig pointing at the internal k3d DNS name.
+    internal: true
+    cmds:
+      # Services inside the k3d-crossplane-ui Docker network reach the API server
+      # at https://k3d-crossplane-ui-server-0:6443. The k3s cert does not list
+      # that DNS name as a SAN, so we toggle insecure-skip-tls-verify (dev only).
+      - |
+        k3d kubeconfig get crossplane-ui | awk '
+          /server: https:\/\// {
+              sub(/https:\/\/[^ ]+/, "https://k3d-crossplane-ui-server-0:6443")
+          }
+          /certificate-authority-data:/ { next }
+          /^- cluster:/ {
+              print
+              print "    insecure-skip-tls-verify: true"
+              next
+          }
+          { print }
+        ' > compose/.kubeconfig
+        chmod 600 compose/.kubeconfig
+        echo "✓ compose/.kubeconfig generated"
+
+  dev:compose:
+    desc: Bring up the compose stack against the running k3d cluster.
+    internal: true
+    dir: compose
+    cmds:
+      - docker compose up -d
+      - |
+        echo ""
+        echo "→ first boot pulls Go modules and npm packages; allow 2-3 min."
+        echo "→ tail logs with: task dev:logs"
+        echo "→ service status:  docker compose -f compose/docker-compose.yml ps"
+
+  dev:kubeconfig:export:
+    desc: Print an `export KUBECONFIG=...` line for the host shell.
+    cmds:
+      - echo "export KUBECONFIG=$(k3d kubeconfig write crossplane-ui)"
+
+  # -------------------------------------------------------------------------
+  # Housekeeping
+  # -------------------------------------------------------------------------
+  clean:
+    desc: Remove build artefacts.
+    cmds:
+      - rm -rf bin dist web/ui/dist web/ui/coverage
+      - for: { var: GO_MODULES }
+        cmd: rm -f {{.ITEM}}/coverage.txt
+
+  default:
+    cmds:
+      - task --list

@@ -1,0 +1,75 @@
+# ---------- Go ----------
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/bin/
+/dist/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+coverage.html
+
+# Dependency directories
+/vendor/
+
+# Go workspace sum
+go.work.sum
+
+# ---------- Node / Vue ----------
+node_modules/
+.pnpm-store/
+.pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+web/ui/dist/
+web/ui/.vite/
+web/ui/stats.html
+
+# Coverage
+web/ui/coverage/
+
+# ---------- Helm ----------
+deploy/helm/**/charts/*.tgz
+deploy/helm/**/Chart.lock
+
+# ---------- Docker ----------
+.docker/
+
+# ---------- IDE / editors ----------
+.idea/
+*.iml
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ---------- Secrets / local env ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+kubeconfig
+kubeconfig.*
+compose/.kubeconfig
+compose/.env
+
+# ---------- Test artifacts ----------
+test/e2e/playwright-report/
+test/e2e/test-results/
+test/e2e/.playwright/
+
+# ---------- Misc ----------
+*.log
+tmp/

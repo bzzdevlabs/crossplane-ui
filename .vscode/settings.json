@@ -1,0 +1,84 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.rulers": [100, 120],
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "files.eol": "\n",
+
+  "[go]": {
+    "editor.defaultFormatter": "golang.go",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": false
+  },
+  "go.useLanguageServer": true,
+  "go.lintTool": "golangci-lint",
+  "go.lintFlags": ["--fast-only"],
+  "go.formatTool": "gofumpt",
+  "go.testFlags": ["-race", "-count=1"],
+  "go.goroot": "/usr/local/go",
+  "go.gopath": "/home/qgerard/go",
+  "go.toolsManagement.checkForUpdates": "off",
+  "go.toolsEnvVars": {
+    "GOTOOLCHAIN": "go1.26.0+auto",
+    "GOROOT": "/usr/local/go",
+    "GOPATH": "/home/qgerard/go"
+  },
+  "gopls": {
+    "ui.semanticTokens": true,
+    "ui.completion.usePlaceholders": true,
+    "formatting.gofumpt": true,
+    "build.buildFlags": []
+  },
+
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[vue]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[yaml]": { "editor.defaultFormatter": "redhat.vscode-yaml" },
+  "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[dockerfile]": { "editor.defaultFormatter": "ms-azuretools.vscode-docker" },
+
+  "eslint.useFlatConfig": true,
+  "eslint.validate": ["javascript", "typescript", "vue"],
+  "eslint.workingDirectories": [{ "pattern": "web/*" }],
+
+  "vue.complete.casing.tags": "kebab",
+  "vue.complete.casing.props": "camel",
+  "vue.inlayHints.missingProps": true,
+
+  "yaml.schemas": {
+    "https://json.schemastore.org/chart.json": "deploy/helm/**/Chart.yaml",
+    "https://raw.githubusercontent.com/helm/helm/main/cmd/helm/testdata/testcharts/values.schema.json": "deploy/helm/**/values.yaml"
+  },
+  "yaml.customTags": [
+    "!reference sequence",
+    "!include scalar"
+  ],
+  "yaml.format.enable": true,
+
+  "files.associations": {
+    "*.gotmpl": "yaml",
+    "*.tpl": "helm"
+  },
+
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/dist": true,
+    "**/.vite": true,
+    "**/coverage": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/.pnpm-store": true,
+    "go.work.sum": true,
+    "pnpm-lock.yaml": true
+  }
+}

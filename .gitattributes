@@ -1,0 +1,36 @@
+# Normalise line endings on checkout and enforce LF on commit.
+* text=auto eol=lf
+
+# Explicit text files
+*.go        text eol=lf
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.vue       text eol=lf
+*.json      text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+*.md        text eol=lf
+*.sh        text eol=lf eol=lf
+Dockerfile  text eol=lf
+
+# Binary files
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.otf       binary
+*.pdf       binary
+
+# Generated files — exclude from diffs and language stats.
+web/ui/pnpm-lock.yaml    linguist-generated=true -diff
+go.work.sum              linguist-generated=true -diff
+**/mocks/**              linguist-generated=true
+**/zz_generated_*.go     linguist-generated=true
+
+# Treat the LICENSE file as documentation for linguist.
+LICENSE                  linguist-documentation=true

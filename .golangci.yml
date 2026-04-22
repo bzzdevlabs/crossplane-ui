@@ -1,0 +1,186 @@
+# golangci-lint v2 configuration.
+# Docs: https://golangci-lint.run/usage/configuration/
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+  allow-parallel-runners: true
+
+output:
+  formats:
+    text:
+      print-linter-name: true
+      print-issued-lines: true
+  sort-order:
+    - linter
+    - severity
+    - file
+
+linters:
+  # Start from the "standard" set and enrich it.
+  default: standard
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - contextcheck
+    - copyloopvar
+    - dupword
+    - durationcheck
+    - errorlint
+    - exhaustive
+    - fatcontext
+    - forbidigo
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - goconst
+    - gocritic
+    - gocyclo
+    - godot
+    - gosec
+    - intrange
+    - loggercheck
+    - misspell
+    - musttag
+    - nakedret
+    - nilerr
+    - nilnesserr
+    - nilnil
+    - noctx
+    - nolintlint
+    - perfsprint
+    - prealloc
+    - predeclared
+    - protogetter
+    - reassign
+    - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - tagalign
+    - testifylint
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+    exhaustive:
+      default-signifies-exhaustive: true
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - style
+        - performance
+        - opinionated
+      disabled-checks:
+        - whyNoLint        # covered by nolintlint
+        - importShadow     # too noisy with k8s.io/api
+    gocyclo:
+      min-complexity: 15
+    gosec:
+      excludes:
+        - G104  # duplicate of errcheck
+    nakedret:
+      max-func-lines: 0
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-no-explanation: []
+    revive:
+      rules:
+        - name: exported
+        - name: unused-parameter
+        - name: var-naming
+        - name: package-comments
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: if-return
+        - name: var-declaration
+        - name: unexported-return
+        - name: time-naming
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: indent-error-flow
+        - name: increment-decrement
+    sloglint:
+      no-mixed-args: true
+      kv-only: false
+      attr-only: true
+      no-global: all
+      context: scope
+      static-msg: true
+      key-naming-case: snake
+    staticcheck:
+      checks:
+        - all
+        - -ST1000 # package comments enforced separately
+    unparam:
+      check-exported: true
+
+  exclusions:
+    generated: lax
+    presets:
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: _test\.go
+        linters:
+          - gocyclo
+          - errcheck
+          - dupl
+          - gosec
+          - goconst
+          - perfsprint
+          - noctx
+      - path: "cmd/"
+        linters:
+          - revive
+        text: "package-comments"
+      - path: "mocks/|zz_generated_"
+        linters:
+          - all
+
+formatters:
+  enable:
+    - gofumpt
+    - goimports
+    - gci
+    - golines
+  settings:
+    gofumpt:
+      extra-rules: true
+    goimports:
+      local-prefixes:
+        - gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui)
+      custom-order: true
+    golines:
+      max-len: 120
+      tab-len: 4
+      shorten-comments: true
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  new: false
+  fix: false
