@@ -20,7 +20,8 @@ vars:
         -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/{{.PROJECT}}/services/gateway/internal/buildinfo.Version={{.VERSION}} \
         -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/{{.PROJECT}}/services/gateway/internal/buildinfo.Commit={{.COMMIT}} \
         -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/{{.PROJECT}}/services/gateway/internal/buildinfo.Date={{.BUILD_DATE}}"
-  REGISTRY: '{{.REGISTRY | default "registry.gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui"}}'
+  REGISTRY: "{{.REGISTRY | default
+    \"registry.gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui\"}}"
 
 tasks:
   # -------------------------------------------------------------------------
@@ -35,15 +36,27 @@ tasks:
       - go install golang.org/x/tools/cmd/goimports@latest
       - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
       - go install honnef.co/go/tools/cmd/staticcheck@latest
+      - go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.19.0
       - pre-commit install --install-hooks || true
       - echo "✓ ready — try 'task dev'"
+
+  # -------------------------------------------------------------------------
+  # Code generation (controller-gen deepcopy + CRD manifests)
+  # -------------------------------------------------------------------------
+  generate:
+    desc: Regenerate deepcopy methods and CRD manifests.
+    cmds:
+      - controller-gen object paths="./pkg/apis/..."
+      - controller-gen crd paths="./pkg/apis/..." output:crd:dir=deploy/crds
+      # Mirror into the Helm chart's crds/ dir so `helm install` ships them.
+      - cp deploy/crds/*.yaml deploy/helm/crossplane-ui/crds/
 
   # -------------------------------------------------------------------------
   # Linting
   # -------------------------------------------------------------------------
   lint:
     desc: Run every linter.
-    deps: [lint:go, lint:ui, lint:helm, lint:yaml]
+    deps: [ lint:go, lint:ui, lint:helm, lint:yaml ]
 
   lint:go:
     desc: golangci-lint across Go modules.
@@ -87,7 +100,7 @@ tasks:
   # -------------------------------------------------------------------------
   fmt:
     desc: Run every formatter in place.
-    deps: [fmt:go, fmt:ui]
+    deps: [ fmt:go, fmt:ui ]
 
   fmt:go:
     cmds:
@@ -104,7 +117,7 @@ tasks:
   # -------------------------------------------------------------------------
   test:
     desc: Run every test suite.
-    deps: [test:go, test:ui]
+    deps: [ test:go, test:ui ]
 
   test:go:
     desc: go test with race + coverage across modules.
@@ -121,7 +134,7 @@ tasks:
 
   test:coverage:
     desc: Print coverage percentages per module.
-    deps: [test:go]
+    deps: [ test:go ]
     cmds:
       - for: { var: GO_MODULES }
         cmd: |
@@ -134,17 +147,19 @@ tasks:
   # -------------------------------------------------------------------------
   build:
     desc: Build all binaries and the UI bundle.
-    deps: [build:gateway, build:auth, build:ui]
+    deps: [ build:gateway, build:auth, build:ui ]
 
   build:gateway:
     cmds:
       - mkdir -p bin
-      - cd services/gateway && CGO_ENABLED=0 go build -trimpath -ldflags "{{.LDFLAGS}}" -o ../../bin/gateway ./cmd
+      - cd services/gateway && CGO_ENABLED=0 go build -trimpath -ldflags
+        "{{.LDFLAGS}}" -o ../../bin/gateway ./cmd
 
   build:auth:
     cmds:
       - mkdir -p bin
-      - cd services/auth && CGO_ENABLED=0 go build -trimpath -ldflags "{{.LDFLAGS}}" -o ../../bin/auth ./cmd
+      - cd services/auth && CGO_ENABLED=0 go build -trimpath -ldflags
+        "{{.LDFLAGS}}" -o ../../bin/auth ./cmd
 
   build:ui:
     dir: web/ui
@@ -156,7 +171,7 @@ tasks:
   # -------------------------------------------------------------------------
   dev:
     desc: Run gateway + auth + vite dev server concurrently.
-    deps: [dev:gateway, dev:auth, dev:ui]
+    deps: [ dev:gateway, dev:auth, dev:ui ]
 
   dev:gateway:
     env:
@@ -182,25 +197,25 @@ tasks:
   # -------------------------------------------------------------------------
   images:
     desc: Build container images for gateway and auth.
-    deps: [images:gateway, images:auth]
+    deps: [ images:gateway, images:auth ]
 
   images:gateway:
     cmds:
-      - docker build --build-arg VERSION={{.VERSION}} --build-arg COMMIT={{.COMMIT}} --build-arg BUILD_DATE={{.BUILD_DATE}}
-          -t {{.REGISTRY}}/gateway:{{.VERSION}}
-          -t {{.REGISTRY}}/gateway:latest
-          -f services/gateway/Dockerfile services/gateway
+      - docker build --build-arg VERSION={{.VERSION}} --build-arg
+        COMMIT={{.COMMIT}} --build-arg BUILD_DATE={{.BUILD_DATE}} -t
+        {{.REGISTRY}}/gateway:{{.VERSION}} -t {{.REGISTRY}}/gateway:latest -f
+        services/gateway/Dockerfile services/gateway
 
   images:auth:
     cmds:
-      - docker build --build-arg VERSION={{.VERSION}} --build-arg COMMIT={{.COMMIT}} --build-arg BUILD_DATE={{.BUILD_DATE}}
-          -t {{.REGISTRY}}/auth:{{.VERSION}}
-          -t {{.REGISTRY}}/auth:latest
-          -f services/auth/Dockerfile services/auth
+      - docker build --build-arg VERSION={{.VERSION}} --build-arg
+        COMMIT={{.COMMIT}} --build-arg BUILD_DATE={{.BUILD_DATE}} -t
+        {{.REGISTRY}}/auth:{{.VERSION}} -t {{.REGISTRY}}/auth:latest -f
+        services/auth/Dockerfile services/auth
 
   images:push:
     desc: Push images to {{.REGISTRY}}.
-    deps: [images]
+    deps: [ images ]
     cmds:
       - docker push {{.REGISTRY}}/gateway:{{.VERSION}}
       - docker push {{.REGISTRY}}/gateway:latest
@@ -223,13 +238,13 @@ tasks:
   chart:template:
     desc: helm template → /tmp/crossplane-ui.rendered.yaml.
     cmds:
-      - helm template crossplane-ui deploy/helm/crossplane-ui --namespace crossplane-ui
-          > /tmp/crossplane-ui.rendered.yaml
+      - helm template crossplane-ui deploy/helm/crossplane-ui --namespace
+        crossplane-ui > /tmp/crossplane-ui.rendered.yaml
       - echo "→ /tmp/crossplane-ui.rendered.yaml"
 
   chart:package:
     desc: Package the chart into dist/.
-    deps: [chart:dep]
+    deps: [ chart:dep ]
     cmds:
       - mkdir -p dist
       - helm package deploy/helm/crossplane-ui --destination dist
@@ -295,7 +310,8 @@ tasks:
       KUBECONFIG:
         sh: k3d kubeconfig write crossplane-ui
     cmds:
-      - helm repo add crossplane-stable https://charts.crossplane.io/stable --force-update >/dev/null
+      - helm repo add crossplane-stable https://charts.crossplane.io/stable
+        --force-update >/dev/null
       - helm repo update crossplane-stable >/dev/null
       - |
         helm upgrade --install crossplane crossplane-stable/crossplane \
@@ -332,6 +348,7 @@ tasks:
     internal: true
     dir: compose
     cmds:
+      - docker compose build --no-cache
       - docker compose up -d
       - |
         echo ""
