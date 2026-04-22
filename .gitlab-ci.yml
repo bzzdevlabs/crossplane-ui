@@ -152,8 +152,14 @@ test:go:
   cache:
     - <<: *cache-go
   rules: !reference [ .rules-pipeline, rules ]
+  variables:
+    # -race uses Go's race detector, whose runtime is linked via cgo and
+    # therefore needs a working C toolchain. golang:1.26-alpine ships
+    # without gcc, so we pull the two smallest packages that satisfy it.
+    CGO_ENABLED: "1"
+  before_script:
+    - apk add --no-cache gcc musl-dev git make
   script:
-    - apk add --no-cache make git
     - |
       for mod in services/gateway services/auth pkg; do
         echo "→ $mod"
