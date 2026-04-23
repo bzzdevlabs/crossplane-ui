@@ -28,6 +28,8 @@
     "providerConfigs": "Provider configs",
     "settings": "Paramètres",
     "users": "Utilisateurs",
+    "groups": "Groupes",
+    "connectors": "Connecteurs",
     "sections": {
       "cluster": "Cluster",
       "overview": "Vue d'ensemble",
@@ -135,7 +137,8 @@
     "actions": "Actions",
     "back": "Retour",
     "openMenu": "Ouvrir le menu",
-    "closeMenu": "Fermer le menu"
+    "closeMenu": "Fermer le menu",
+    "loading": "Chargement…"
   },
   "resource": {
     "apply": "Appliquer",
@@ -160,6 +163,76 @@
     },
     "detail": {
       "editAsYaml": "Éditer en YAML"
+    }
+  },
+  "connectors": {
+    "title": "Connecteurs d'identité",
+    "subtitle": "Sources de connexion fédérées projetées dans Dex (LDAP, SAML, GitHub, Google, OIDC générique).",
+    "create": "Ajouter un connecteur",
+    "edit": "Modifier le connecteur",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "delete": "Supprimer",
+    "disabled": "Désactivé (masquer dans l'écran de connexion)",
+    "empty": "Aucun connecteur pour le moment. Ajoutez-en un pour activer le SSO.",
+    "confirmDelete": "Supprimer le connecteur {name} ?",
+    "docs": "Documentation Dex",
+    "sections": { "config": "Configuration du fournisseur" },
+    "columns": {
+      "id": "ID",
+      "name": "Nom",
+      "type": "Type",
+      "disabled": "Désactivé"
+    },
+    "help": {
+      "id": "Identifiant stable compatible URL ; utilisé dans /callback/{id}. Non modifiable après création.",
+      "secretSet": "Un secret est défini. Saisissez une nouvelle valeur pour le remplacer."
+    }
+  },
+  "users": {
+    "title": "Utilisateurs",
+    "subtitle": "Comptes locaux stockés en CR auth.crossplane-ui.io/User et projetés dans Dex.",
+    "create": "Ajouter un utilisateur",
+    "edit": "Modifier l'utilisateur",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "password": "Mot de passe",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "passwordKeepBlank": "Laissez vide pour conserver le mot de passe actuel",
+    "disabled": "Désactivé (masquer dans Dex)",
+    "empty": "Aucun utilisateur pour le moment.",
+    "noGroups": "Aucun groupe défini. Créez d'abord un groupe pour en affecter l'appartenance.",
+    "confirmDelete": "Supprimer l'utilisateur {name} ?",
+    "sections": { "groups": "Appartenance aux groupes" },
+    "columns": {
+      "username": "Nom d'utilisateur",
+      "email": "E-mail",
+      "groups": "Groupes",
+      "disabled": "Désactivé"
+    },
+    "errors": {
+      "passwordRequired": "Un mot de passe est requis à la création."
+    }
+  },
+  "groups": {
+    "title": "Groupes",
+    "subtitle": "Ensembles nommés d'utilisateurs, utilisés pour les bindings RBAC Kubernetes.",
+    "create": "Ajouter un groupe",
+    "edit": "Modifier le groupe",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "empty": "Aucun groupe pour le moment.",
+    "confirmDelete": "Supprimer le groupe {name} ? Les utilisateurs gardent la référence jusqu'à leur prochaine édition.",
+    "noMembers": "Aucun membre.",
+    "membersHint": "L'appartenance est portée par User.spec.groups. Éditez un utilisateur pour l'ajouter ou le retirer.",
+    "sections": { "members": "Membres" },
+    "columns": {
+      "displayName": "Nom affiché",
+      "description": "Description",
+      "members": "Membres"
+    },
+    "help": {
+      "name": "Utilisé dans User.spec.groups et les bindings RBAC. Non renommable."
     }
   }
 }

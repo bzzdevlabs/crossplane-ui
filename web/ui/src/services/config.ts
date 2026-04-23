@@ -7,6 +7,7 @@ export interface AuthConfig {
 
 export interface GatewayConfig {
   readonly auth: AuthConfig;
+  readonly authNamespace?: string;
   readonly version?: string;
 }
 

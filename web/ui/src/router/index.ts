@@ -39,6 +39,46 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/UsersView.vue'),
       },
       {
+        path: 'users/_create',
+        name: 'user-create',
+        component: () => import('@/views/UserFormView.vue'),
+      },
+      {
+        path: 'users/:name',
+        name: 'user-detail',
+        component: () => import('@/views/UserFormView.vue'),
+      },
+      {
+        path: 'groups',
+        name: 'groups',
+        component: () => import('@/views/GroupsView.vue'),
+      },
+      {
+        path: 'groups/_create',
+        name: 'group-create',
+        component: () => import('@/views/GroupFormView.vue'),
+      },
+      {
+        path: 'groups/:name',
+        name: 'group-detail',
+        component: () => import('@/views/GroupFormView.vue'),
+      },
+      {
+        path: 'connectors',
+        name: 'connectors',
+        component: () => import('@/views/ConnectorsView.vue'),
+      },
+      {
+        path: 'connectors/_create',
+        name: 'connector-create',
+        component: () => import('@/views/ConnectorFormView.vue'),
+      },
+      {
+        path: 'connectors/:id',
+        name: 'connector-detail',
+        component: () => import('@/views/ConnectorFormView.vue'),
+      },
+      {
         path: 'settings',
         name: 'settings',
         component: () => import('@/views/SettingsView.vue'),

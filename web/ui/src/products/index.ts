@@ -97,7 +97,23 @@ export const PRODUCTS: readonly Product[] = [
     groups: [
       {
         labelKey: 'nav.sections.administration',
-        items: [{ labelKey: 'nav.users', to: { name: 'users' } }],
+        items: [
+          {
+            labelKey: 'nav.users',
+            to: { name: 'users' },
+            routeNames: ['users', 'user-create', 'user-detail'],
+          },
+          {
+            labelKey: 'nav.groups',
+            to: { name: 'groups' },
+            routeNames: ['groups', 'group-create', 'group-detail'],
+          },
+          {
+            labelKey: 'nav.connectors',
+            to: { name: 'connectors' },
+            routeNames: ['connectors', 'connector-create', 'connector-detail'],
+          },
+        ],
       },
     ],
   },
@@ -129,7 +145,15 @@ export function productForRouteName(name: string | null | undefined): Product {
   if (name.startsWith('crossplane') || name.startsWith('resource-')) {
     return productById('crossplane')!;
   }
-  if (name.startsWith('users')) return productById('users')!;
+  if (
+    name.startsWith('users') ||
+    name.startsWith('user-') ||
+    name.startsWith('groups') ||
+    name.startsWith('group-') ||
+    name.startsWith('connector')
+  ) {
+    return productById('users')!;
+  }
   if (name.startsWith('settings')) return productById('settings')!;
   return PRODUCTS[0]!;
 }

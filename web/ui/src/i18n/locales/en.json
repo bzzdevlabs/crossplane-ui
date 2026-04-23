@@ -25,6 +25,8 @@
     "providerConfigs": "Provider configs",
     "settings": "Settings",
     "users": "Users",
+    "groups": "Groups",
+    "connectors": "Connectors",
     "sections": {
       "cluster": "Cluster",
       "overview": "Overview",
@@ -132,7 +134,8 @@
     "actions": "Actions",
     "back": "Back",
     "openMenu": "Open menu",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "loading": "Loading…"
   },
   "resource": {
     "apply": "Apply",
@@ -157,6 +160,76 @@
     },
     "detail": {
       "editAsYaml": "Edit as YAML"
+    }
+  },
+  "connectors": {
+    "title": "Identity provider connectors",
+    "subtitle": "Federated login sources projected into Dex (LDAP, SAML, GitHub, Google, generic OIDC).",
+    "create": "Add connector",
+    "edit": "Edit connector",
+    "save": "Save",
+    "saving": "Saving…",
+    "delete": "Delete",
+    "disabled": "Disabled (hide from login chooser)",
+    "empty": "No connectors yet. Add one to enable SSO.",
+    "confirmDelete": "Delete connector {name}?",
+    "docs": "Dex documentation",
+    "sections": { "config": "Provider configuration" },
+    "columns": {
+      "id": "ID",
+      "name": "Name",
+      "type": "Type",
+      "disabled": "Disabled"
+    },
+    "help": {
+      "id": "Stable URL-safe id; used in /callback/{id}. Cannot be changed once created.",
+      "secretSet": "A secret is set. Type a new value to replace it."
+    }
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Local accounts stored as auth.crossplane-ui.io/User CRs and projected into Dex.",
+    "create": "Add user",
+    "edit": "Edit user",
+    "save": "Save",
+    "delete": "Delete",
+    "password": "Password",
+    "resetPassword": "Reset password",
+    "passwordKeepBlank": "Leave blank to keep current password",
+    "disabled": "Disabled (hide from Dex)",
+    "empty": "No users yet.",
+    "noGroups": "No groups defined yet. Create a group first to assign membership.",
+    "confirmDelete": "Delete user {name}?",
+    "sections": { "groups": "Group membership" },
+    "columns": {
+      "username": "Username",
+      "email": "Email",
+      "groups": "Groups",
+      "disabled": "Disabled"
+    },
+    "errors": {
+      "passwordRequired": "A password is required when creating a user."
+    }
+  },
+  "groups": {
+    "title": "Groups",
+    "subtitle": "Named collections of users, used for Kubernetes RBAC bindings.",
+    "create": "Add group",
+    "edit": "Edit group",
+    "save": "Save",
+    "delete": "Delete",
+    "empty": "No groups yet.",
+    "confirmDelete": "Delete group {name}? Users keep the reference until their next edit.",
+    "noMembers": "No members.",
+    "membersHint": "Membership is driven by User.spec.groups. Edit a user to add or remove them here.",
+    "sections": { "members": "Members" },
+    "columns": {
+      "displayName": "Display name",
+      "description": "Description",
+      "members": "Members"
+    },
+    "help": {
+      "name": "Used in User.spec.groups and in RBAC bindings. Cannot be renamed."
     }
   }
 }

@@ -148,3 +148,84 @@ export function deleteResource(ref: ResourceRef): Promise<void> {
     method: 'DELETE',
   });
 }
+
+export type ConnectorType = 'ldap' | 'saml' | 'github' | 'google' | 'oidc';
+
+export interface ConnectorSecretRef {
+  readonly name: string;
+  readonly key: string;
+}
+
+export interface ConnectorSecretInjection {
+  readonly path: string;
+  readonly secretRef: ConnectorSecretRef;
+}
+
+export interface ConnectorSpec {
+  readonly id: string;
+  readonly type: ConnectorType;
+  readonly name: string;
+  readonly config: Record<string, unknown>;
+  readonly secretRefs?: readonly ConnectorSecretInjection[];
+  readonly disabled?: boolean;
+}
+
+export interface ConnectorCR {
+  readonly apiVersion: string;
+  readonly kind: string;
+  readonly metadata: {
+    readonly name: string;
+    readonly creationTimestamp?: string;
+    readonly resourceVersion?: string;
+  };
+  readonly spec: ConnectorSpec;
+  readonly status?: {
+    readonly conditions?: readonly {
+      readonly type: string;
+      readonly status: string;
+      readonly reason?: string;
+      readonly message?: string;
+    }[];
+  };
+}
+
+export interface ConnectorList {
+  readonly items: readonly ConnectorCR[];
+}
+
+export function listConnectors(): Promise<ConnectorList> {
+  return apiFetch<ConnectorList>('/api/v1/auth/connectors');
+}
+
+export function getConnector(name: string): Promise<ConnectorCR> {
+  return apiFetch<ConnectorCR>(`/api/v1/auth/connectors?name=${encodeURIComponent(name)}`);
+}
+
+export function applyConnector(body: Record<string, unknown>): Promise<ConnectorCR> {
+  return apiFetch<ConnectorCR>('/api/v1/auth/connectors', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export function deleteConnector(name: string): Promise<void> {
+  return apiFetch<void>(`/api/v1/auth/connectors?name=${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  });
+}
+
+export interface ConnectorSecretWrite {
+  readonly namespace: string;
+  readonly name: string;
+  readonly data: Record<string, string>;
+}
+
+export function writeConnectorSecret(body: ConnectorSecretWrite): Promise<{ keys: string[] }> {
+  return apiFetch<{ keys: string[] }>('/api/v1/auth/connector-secrets', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
