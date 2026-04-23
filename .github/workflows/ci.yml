@@ -229,6 +229,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write        # OIDC token for Sigstore/Fulcio signing
+      attestations: write    # write SLSA provenance + SBOM attestations
     steps:
       - uses: actions/checkout@v6
       - uses: docker/setup-buildx-action@v4
@@ -246,34 +248,58 @@ jobs:
             echo "version=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
           fi
       - name: Build & push gateway
+        id: push-gateway
         uses: docker/build-push-action@v6
         with:
           context: services/gateway
           file: services/gateway/Dockerfile
           push: true
+          # In-toto provenance + SBOM baked into the image manifest. Max mode
+          # includes full build materials in the provenance predicate.
+          provenance: mode=max
+          sbom: true
           build-args: |
             VERSION=${{ steps.ver.outputs.version }}
             COMMIT=${{ github.sha }}
           tags: |
             ghcr.io/bzzdevlabs/crossplane-ui/gateway:${{ steps.ver.outputs.version }}
             ghcr.io/bzzdevlabs/crossplane-ui/gateway:latest
+      - name: Attest gateway provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/bzzdevlabs/crossplane-ui/gateway
+          subject-digest: ${{ steps.push-gateway.outputs.digest }}
+          push-to-registry: true
       - name: Build & push auth
+        id: push-auth
         uses: docker/build-push-action@v6
         with:
           context: services/auth
           file: services/auth/Dockerfile
           push: true
+          provenance: mode=max
+          sbom: true
           build-args: |
             VERSION=${{ steps.ver.outputs.version }}
             COMMIT=${{ github.sha }}
           tags: |
             ghcr.io/bzzdevlabs/crossplane-ui/auth:${{ steps.ver.outputs.version }}
             ghcr.io/bzzdevlabs/crossplane-ui/auth:latest
+      - name: Attest auth provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ghcr.io/bzzdevlabs/crossplane-ui/auth
+          subject-digest: ${{ steps.push-auth.outputs.digest }}
+          push-to-registry: true
 
   package-chart:
     needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v6
       - uses: azure/setup-helm@v4
@@ -282,6 +308,10 @@ jobs:
       - run: helm repo add dex https://charts.dexidp.io
       - run: helm dependency update deploy/helm/crossplane-ui
       - run: mkdir -p dist && helm package deploy/helm/crossplane-ui --destination dist
+      - name: Attest chart provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/*.tgz
       - uses: actions/upload-artifact@v4
         with:
           name: helm-chart
