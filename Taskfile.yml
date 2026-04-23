@@ -348,7 +348,9 @@ tasks:
     internal: true
     dir: compose
     cmds:
-      - docker compose up -d --build
+      - docker compose down -v
+      - docker compose build --no-cache
+      - docker compose up -d
       - |
         echo ""
         echo "→ first boot builds gateway/auth images and installs npm packages; allow 2-3 min."
