@@ -249,7 +249,7 @@ jobs:
           fi
       - name: Build & push gateway
         id: push-gateway
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: services/gateway
           file: services/gateway/Dockerfile
@@ -272,7 +272,7 @@ jobs:
           push-to-registry: true
       - name: Build & push auth
         id: push-auth
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           # auth Dockerfile expects the repo root as build context: its
           # go.mod uses `replace ../../pkg`, so pkg/ must be copyable.
