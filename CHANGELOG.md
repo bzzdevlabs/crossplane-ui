@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/bzzdevlabs/crossplane-ui/compare/v1.0.0...v1.1.0) (2026-04-23)
+
+
+### Features
+
+* **gateway:** embed Vue SPA via //go:embed ([c1e9574](https://github.com/bzzdevlabs/crossplane-ui/commit/c1e95749cf7cef554216ea53cc731ef7faa2bb02))
+
 # 1.0.0 (2026-04-23)
 
 
