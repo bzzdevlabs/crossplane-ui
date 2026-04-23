@@ -1,0 +1,13 @@
+.git
+.github
+.gitlab-ci.yml
+.vscode
+.idea
+bin/
+dist/
+coverage.*
+*.test
+**/node_modules
+web/ui/dist
+compose/.kubeconfig
+compose/.env

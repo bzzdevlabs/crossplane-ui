@@ -37,34 +37,26 @@ services:
     restart: unless-stopped
 
   auth:
-    image: golang:1.26-alpine
+    build:
+      context: ..
+      dockerfile: services/auth/Dockerfile
     container_name: crossplane-ui-auth
-    working_dir: /workspace/services/auth
     environment:
       HTTP_ADDR: ":8081"
       LOG_LEVEL: debug
       LOG_FORMAT: text
       KUBECONFIG: /kubeconfig
     volumes:
-      - ..:/workspace
       - ./.kubeconfig:/kubeconfig:ro
-      - go-cache:/root/.cache/go-build
-      - go-mod:/go/pkg/mod
     ports:
       - "${AUTH_HOST_PORT:-8081}:8081"
-    command: ["go", "run", "./cmd"]
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8081/healthz >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 20
-      start_period: 60s
     restart: unless-stopped
 
   gateway:
-    image: golang:1.26-alpine
+    build:
+      context: ../services/gateway
+      dockerfile: Dockerfile
     container_name: crossplane-ui-gateway
-    working_dir: /workspace/services/gateway
     environment:
       HTTP_ADDR: ":8080"
       LOG_LEVEL: debug
@@ -81,10 +73,7 @@ services:
       CORS_ALLOWED_ORIGINS: "http://localhost:${UI_HOST_PORT:-5173}"
       AUTH_SERVICE_URL: http://auth:8081
     volumes:
-      - ..:/workspace
       - ./.kubeconfig:/kubeconfig:ro
-      - go-cache:/root/.cache/go-build
-      - go-mod:/go/pkg/mod
     ports:
       - "${GATEWAY_HOST_PORT:-8080}:8080"
     depends_on:
@@ -92,13 +81,6 @@ services:
         condition: service_started
       dex:
         condition: service_healthy
-    command: ["go", "run", "./cmd"]
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 3s
-      retries: 20
-      start_period: 60s
     restart: unless-stopped
 
   ui:
@@ -118,7 +100,7 @@ services:
       - "${UI_HOST_PORT:-5173}:5173"
     depends_on:
       gateway:
-        condition: service_healthy
+        condition: service_started
     # corepack is no longer shipped in node:22; install pnpm via npm.
     command:
       - sh
@@ -140,6 +122,4 @@ networks:
     external: true
 
 volumes:
-  go-cache:
-  go-mod:
   ui-node-modules:

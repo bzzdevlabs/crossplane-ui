@@ -38,9 +38,9 @@ task dev:kubeconfig    # prints the `export KUBECONFIG=...` line for the host
 | k3s        | k3d node container                | 6443 (via k3d LB)  | Kubernetes API + Crossplane controllers.   |
 | Crossplane | k3s, `crossplane-system` ns       | n/a                | Provides the CRDs the UI will list/manage. |
 | `dex`      | compose service                   | 5556               | OIDC IdP with two local users.             |
-| `auth`     | compose service (golang:1.26)      | 8081               | Local-user controller (scaffold — M1).     |
-| `gateway`  | compose service (golang:1.26)      | 8080               | HTTP API (scaffold — M1).                  |
-| `ui`       | compose service (node:22 + pnpm)   | 5173 (Vite dev)    | Hot-reloading Vue app.                     |
+| `auth`     | compose service (built image)     | 8081               | Local-user controller (scaffold — M1).     |
+| `gateway`  | compose service (built image)     | 8080               | HTTP API (scaffold — M1).                  |
+| `ui`       | compose service (node:22 + pnpm)  | 5173 (Vite dev)    | Hot-reloading Vue app.                     |
 
 ## Network layout
 
@@ -105,9 +105,13 @@ kubectl apply -f https://raw.githubusercontent.com/crossplane/docs/v2.2/content/
 
 ### The Go services take forever to start
 
-The first run downloads the full Go module cache inside the compose
-`go-mod` volume. Subsequent starts reuse the cache and boot in a few
-seconds.
+The first run builds the `gateway` and `auth` images (multi-stage Docker
+builds). Subsequent rebuilds reuse the BuildKit `go-build` and `go mod`
+cache mounts and finish in a few seconds. Rebuild after Go changes with:
+
+```bash
+docker compose up -d --build gateway auth
+```
 
 ### Vite cannot reach the gateway
 

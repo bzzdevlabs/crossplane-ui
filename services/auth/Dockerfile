@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1.7
+# Build context: repository root (auth go.mod uses `replace ../../pkg`).
 FROM golang:1.26-alpine AS builder
 
 ARG VERSION=dev
@@ -11,11 +12,15 @@ RUN apk add --no-cache ca-certificates tzdata
 
 WORKDIR /src
 
-COPY go.mod go.sum* ./
+COPY pkg/go.mod pkg/go.sum ./pkg/
+COPY services/auth/go.mod services/auth/go.sum* ./services/auth/
 RUN --mount=type=cache,target=/go/pkg/mod \
-    go mod download
+    cd services/auth && go mod download
 
-COPY . .
+COPY pkg ./pkg
+COPY services/auth ./services/auth
+
+WORKDIR /src/services/auth
 
 ENV CGO_ENABLED=0
 ENV GOFLAGS=-trimpath

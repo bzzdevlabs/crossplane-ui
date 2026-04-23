@@ -348,11 +348,11 @@ tasks:
     internal: true
     dir: compose
     cmds:
-      - docker compose build --no-cache
-      - docker compose up -d
+      - docker compose up -d --build
       - |
         echo ""
-        echo "→ first boot pulls Go modules and npm packages; allow 2-3 min."
+        echo "→ first boot builds gateway/auth images and installs npm packages; allow 2-3 min."
+        echo "→ rebuild Go services after changes: docker compose up -d --build gateway auth"
         echo "→ tail logs with: task dev:logs"
         echo "→ service status:  docker compose -f compose/docker-compose.yml ps"
 
