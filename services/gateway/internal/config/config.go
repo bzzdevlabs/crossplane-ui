@@ -44,6 +44,10 @@ type Config struct {
 
 	// AuthServiceURL is the base URL of the companion auth service.
 	AuthServiceURL string
+	// AuthNamespace is the namespace hosting the auth controller's Secrets
+	// (connector credentials land there). Surfaced via /api/v1/config so the
+	// UI targets the right namespace when POSTing ConnectorSecretsHandler.
+	AuthNamespace string
 
 	// CORSAllowedOrigins is the list of Origin values accepted by the
 	// gateway; use a single "*" to allow any origin (dev only).
@@ -64,6 +68,7 @@ func Load() (*Config, error) {
 		OIDCClientID:        os.Getenv("OIDC_CLIENT_ID"),
 		OIDCSkipIssuerCheck: getBool("OIDC_SKIP_ISSUER_CHECK", false),
 		AuthServiceURL:      getString("AUTH_SERVICE_URL", "http://auth.crossplane-ui.svc.cluster.local:8081"),
+		AuthNamespace:       getString("AUTH_NAMESPACE", "crossplane-ui"),
 		CORSAllowedOrigins:  splitCSV(getString("CORS_ALLOWED_ORIGINS", "http://localhost:5173")),
 	}
 

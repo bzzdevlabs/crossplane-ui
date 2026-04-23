@@ -13,6 +13,9 @@ import (
 type ConfigResponse struct {
 	// Auth carries the OIDC parameters the SPA uses with PKCE.
 	Auth AuthConfig `json:"auth"`
+	// AuthNamespace is where the auth controller reads connector Secrets
+	// from. The UI uses it to target the ConnectorSecretsHandler.
+	AuthNamespace string `json:"authNamespace,omitempty"`
 	// Version is the semver tag of the gateway build (empty in dev).
 	Version string `json:"version,omitempty"`
 }
@@ -39,7 +42,8 @@ func ConfigHandler(logger *slog.Logger, cfg *config.Config, version string) http
 			return
 		}
 		payload := ConfigResponse{
-			Version: version,
+			Version:       version,
+			AuthNamespace: cfg.AuthNamespace,
 			Auth: AuthConfig{
 				Enabled:   cfg.AuthEnabled(),
 				IssuerURL: cfg.OIDCIssuerURL,

@@ -106,7 +106,17 @@ func (s *Server) registerAPI(mux *http.ServeMux) {
 			api.CrossplaneResourcesHandler(s.deps.Logger, s.deps.CrossplaneFactory))
 		apiMux.Handle("/api/v1/crossplane/resource",
 			api.ResourceHandler(s.deps.Logger, s.deps.CrossplaneFactory))
+		apiMux.Handle("/api/v1/auth/connectors",
+			api.ConnectorsHandler(s.deps.Logger, s.deps.CrossplaneFactory))
+		apiMux.Handle("/api/v1/auth/users",
+			api.UsersHandler(s.deps.Logger, s.deps.CrossplaneFactory))
+		apiMux.Handle("/api/v1/auth/groups",
+			api.GroupsHandler(s.deps.Logger, s.deps.CrossplaneFactory))
 	}
+	apiMux.Handle("/api/v1/auth/connector-secrets",
+		api.ConnectorSecretsHandler(s.deps.Logger, s.deps.ClientFactory))
+	apiMux.Handle("/api/v1/auth/user-password",
+		api.UserPasswordHandler(s.deps.Logger, s.deps.ClientFactory))
 
 	mux.Handle("/api/v1/", s.deps.AuthMiddleware(apiMux))
 }
