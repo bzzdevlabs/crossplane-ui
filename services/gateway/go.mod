@@ -1,4 +1,4 @@
-module gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway
+module github.com/bzzdevlabs/crossplane-ui/services/gateway
 
 go 1.26
 

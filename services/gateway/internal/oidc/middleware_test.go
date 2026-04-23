@@ -10,7 +10,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	gwoidc "gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/oidc"
+	gwoidc "github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/oidc"
 )
 
 // fakeVerifier is a hand-rolled stub that satisfies gwoidc.Verifier.

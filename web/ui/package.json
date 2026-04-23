@@ -7,7 +7,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui"
+    "url": "https://github.com/bzzdevlabs/crossplane-ui"
   },
   "engines": {
     "node": ">=22",

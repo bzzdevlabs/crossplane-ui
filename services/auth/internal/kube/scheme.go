@@ -11,8 +11,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	authv1alpha1 "gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/pkg/apis/auth/v1alpha1"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/dex"
+	authv1alpha1 "github.com/bzzdevlabs/crossplane-ui/pkg/apis/auth/v1alpha1"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/dex"
 )
 
 // Scheme is the runtime scheme shared by the manager and any ad-hoc clients.

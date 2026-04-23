@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/api"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/config"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/api"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/config"
 )
 
 func TestConfigHandlerReturnsOIDCDetailsWhenEnabled(t *testing.T) {

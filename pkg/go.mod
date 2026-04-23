@@ -1,4 +1,4 @@
-module gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/pkg
+module github.com/bzzdevlabs/crossplane-ui/pkg
 
 go 1.26
 

@@ -12,10 +12,10 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/config"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/metrics"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/oidc"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/server"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/config"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/metrics"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/oidc"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/server"
 )
 
 // errNopFactoryNotWired is returned by the test-only factory. Tests in this

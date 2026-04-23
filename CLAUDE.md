@@ -135,7 +135,7 @@ and cut releases. License-scanning was removed.
   `repo` (see `commitlint.config.mjs`).
 - Go: `gofumpt` + `goimports` + `gci` via `golangci-lint run --fix`. Local
   prefix for import grouping:
-  `gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui`.
+  `github.com/bzzdevlabs/crossplane-ui`.
 - UI: ESLint 9 flat config (`eslint.config.mjs`) + Prettier + Stylelint 17.
   Run `pnpm run lint:fix` to auto-format.
 - Logs use `log/slog` JSON with `snake_case` keys (enforced by `sloglint`).

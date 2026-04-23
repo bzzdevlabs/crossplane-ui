@@ -25,14 +25,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logsv1 "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/bootstrap"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/buildinfo"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/config"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/dex"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/kube"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/logging"
-	mgrpkg "gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/manager"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/server"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/bootstrap"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/buildinfo"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/config"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/dex"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/kube"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/logging"
+	mgrpkg "github.com/bzzdevlabs/crossplane-ui/services/auth/internal/manager"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/server"
 )
 
 const shutdownTimeout = 30 * time.Second

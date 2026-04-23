@@ -1,15 +1,15 @@
-module gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth
+module github.com/bzzdevlabs/crossplane-ui/services/auth
 
 go 1.26
 
 toolchain go1.26.0
 
-replace gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/pkg => ../../pkg
+replace github.com/bzzdevlabs/crossplane-ui/pkg => ../../pkg
 
 require (
+	github.com/bzzdevlabs/crossplane-ui/pkg v0.0.0-00010101000000-000000000000
 	github.com/go-logr/logr v1.4.3
 	github.com/google/uuid v1.6.0
-	gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/pkg v0.0.0-00010101000000-000000000000
 	golang.org/x/crypto v0.50.0
 	golang.org/x/sync v0.20.0
 	k8s.io/api v0.35.0

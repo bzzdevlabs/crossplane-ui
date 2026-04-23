@@ -12,8 +12,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	fakedynamic "k8s.io/client-go/dynamic/fake"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/api"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/oidc"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/api"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/oidc"
 )
 
 func authCtx(req *http.Request) *http.Request {

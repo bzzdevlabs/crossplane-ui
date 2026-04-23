@@ -13,10 +13,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/api"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/config"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/metrics"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/middleware"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/api"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/config"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/metrics"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/middleware"
 )
 
 // Deps bundles the heavyweight collaborators the server needs to run.

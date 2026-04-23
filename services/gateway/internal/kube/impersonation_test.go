@@ -9,7 +9,7 @@ import (
 
 	"k8s.io/client-go/rest"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/kube"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/kube"
 )
 
 // TestFactoryForwardsImpersonationHeaders spins a tiny httptest apiserver

@@ -15,8 +15,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/api"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/oidc"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/api"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/oidc"
 )
 
 // fakeFactory returns the same pre-baked clientset on every call and

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/config"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/server"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/config"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/server"
 )
 
 func newTestServer(t *testing.T) (baseURL string, shutdown func()) {

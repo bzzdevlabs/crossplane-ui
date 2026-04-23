@@ -16,8 +16,8 @@ import (
 	fakedynamic "k8s.io/client-go/dynamic/fake"
 	clienttesting "k8s.io/client-go/testing"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/api"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/oidc"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/api"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/oidc"
 )
 
 type fakeCrossplaneFactory struct {

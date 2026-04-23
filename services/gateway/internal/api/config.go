@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/config"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/config"
 )
 
 // ConfigResponse is the public-facing subset of the gateway's configuration

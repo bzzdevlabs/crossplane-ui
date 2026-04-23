@@ -15,13 +15,13 @@ import (
 	"syscall"
 	"time"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/buildinfo"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/config"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/kube"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/logging"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/metrics"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/oidc"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/server"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/buildinfo"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/config"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/kube"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/logging"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/metrics"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/oidc"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/server"
 )
 
 const (

@@ -4,7 +4,7 @@
 # -- Number of API object replicas to deploy for stateless workloads.
 global:
   # -- Docker image registry shared by all services.
-  imageRegistry: "registry.gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui"
+  imageRegistry: "ghcr.io/bzzdevlabs/crossplane-ui"
   imagePullSecrets: []
   # -- Common labels applied to every rendered object.
   labels: {}

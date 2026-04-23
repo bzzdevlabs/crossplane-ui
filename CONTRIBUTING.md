@@ -85,11 +85,11 @@ by `semantic-release` on the `main` branch.
 1. Fork the repository and create a topic branch from `main`.
 2. Make your changes; keep commits small and focused.
 3. Run `task lint test` locally — CI mirrors these checks.
-4. Open a Merge Request targeting `main`. Fill in the MR template.
+4. Open a Pull Request targeting `main`. Fill in the PR template.
 5. At least one maintainer review and a green CI pipeline are required before
    a merge. We use squash-and-merge to keep history linear.
 
 ## Reporting bugs and requesting features
 
-Please open a GitLab issue using the relevant template. Security vulnerabilities
+Please open a GitHub issue using the relevant template. Security vulnerabilities
 must be reported privately — see [SECURITY.md](SECURITY.md).

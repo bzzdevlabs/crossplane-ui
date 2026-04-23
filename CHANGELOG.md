@@ -50,4 +50,4 @@ This file is maintained automatically by
 - Local dev stack under `compose/` (k3d + Dex + auth + gateway + UI)
   orchestrated by `task dev:up` / `dev:down` / `dev:reset`.
 
-[Unreleased]: https://gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/-/compare/main...HEAD
+[Unreleased]: https://github.com/bzzdevlabs/crossplane-ui/compare/main...HEAD

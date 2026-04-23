@@ -19,9 +19,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/config"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/controller"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/kube"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/config"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/controller"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/kube"
 )
 
 // Options collects what New needs besides the REST config.

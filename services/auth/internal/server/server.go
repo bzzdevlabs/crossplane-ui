@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/config"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/config"
 )
 
 // Server is the auth HTTP server.

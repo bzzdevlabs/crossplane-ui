@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/metrics"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/metrics"
 )
 
 func TestRegistryExposesExpectedMetrics(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/password"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/password"
 )
 
 func TestHashAndVerify(t *testing.T) {

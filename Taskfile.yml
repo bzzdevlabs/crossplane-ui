@@ -17,11 +17,11 @@ vars:
   LDFLAGS:
     sh: |
       echo "-s -w \
-        -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/{{.PROJECT}}/services/gateway/internal/buildinfo.Version={{.VERSION}} \
-        -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/{{.PROJECT}}/services/gateway/internal/buildinfo.Commit={{.COMMIT}} \
-        -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/{{.PROJECT}}/services/gateway/internal/buildinfo.Date={{.BUILD_DATE}}"
+        -X github.com/bzzdevlabs/{{.PROJECT}}/services/gateway/internal/buildinfo.Version={{.VERSION}} \
+        -X github.com/bzzdevlabs/{{.PROJECT}}/services/gateway/internal/buildinfo.Commit={{.COMMIT}} \
+        -X github.com/bzzdevlabs/{{.PROJECT}}/services/gateway/internal/buildinfo.Date={{.BUILD_DATE}}"
   REGISTRY: "{{.REGISTRY | default
-    \"registry.gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui\"}}"
+    \"ghcr.io/bzzdevlabs/crossplane-ui\"}}"
 
 tasks:
   # -------------------------------------------------------------------------

@@ -171,12 +171,12 @@ formatters:
       extra-rules: true
     goimports:
       local-prefixes:
-        - gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui
+        - github.com/bzzdevlabs/crossplane-ui
     gci:
       sections:
         - standard
         - default
-        - prefix(gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui)
+        - prefix(github.com/bzzdevlabs/crossplane-ui)
       custom-order: true
     golines:
       max-len: 120

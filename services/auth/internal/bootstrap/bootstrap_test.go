@@ -9,10 +9,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
-	authv1alpha1 "gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/pkg/apis/auth/v1alpha1"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/bootstrap"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/kube"
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/auth/internal/password"
+	authv1alpha1 "github.com/bzzdevlabs/crossplane-ui/pkg/apis/auth/v1alpha1"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/bootstrap"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/kube"
+	"github.com/bzzdevlabs/crossplane-ui/services/auth/internal/password"
 )
 
 func adminSecret(ns, name, user, pwd string) *corev1.Secret {

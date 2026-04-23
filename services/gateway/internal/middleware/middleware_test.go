@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/middleware"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/middleware"
 )
 
 func TestRequestIDGeneratesWhenAbsent(t *testing.T) {

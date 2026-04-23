@@ -13,7 +13,7 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 
-	"gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/oidc"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/oidc"
 )
 
 // ClientFactory is the narrow contract the api package consumes from

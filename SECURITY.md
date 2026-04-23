@@ -33,8 +33,7 @@ fix within **30 days** for high-severity issues, earlier when possible.
 
 - We practice coordinated disclosure.
 - Once a fix is available and deployed on the supported versions, we publish
-  an advisory on the GitLab project's security dashboard and in the
-  [CHANGELOG](CHANGELOG.md).
+  a GitHub Security Advisory and update the [CHANGELOG](CHANGELOG.md).
 - Reporters are credited unless they request otherwise.
 
 ## Scope
