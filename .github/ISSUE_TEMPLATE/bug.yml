@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a defect in crossplane-ui.
+labels: [bug]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal, reproducible steps.
+      placeholder: |
+        1. …
+        2. …
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: chart version, image tag, or git SHA
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: Kubernetes version, Crossplane version, Dex version, browser if UI-related.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      render: shell

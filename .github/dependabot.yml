@@ -1,0 +1,53 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /pkg
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+    groups:
+      gomod:
+        patterns: ["*"]
+
+  - package-ecosystem: gomod
+    directory: /services/gateway
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+    groups:
+      gomod:
+        patterns: ["*"]
+
+  - package-ecosystem: gomod
+    directory: /services/auth
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+    groups:
+      gomod:
+        patterns: ["*"]
+
+  - package-ecosystem: npm
+    directory: /web/ui
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+    groups:
+      npm:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
