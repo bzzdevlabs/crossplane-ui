@@ -87,6 +87,15 @@ func New(opts Options) (manager.Manager, error) {
 		return nil, fmt.Errorf("setup group reconciler: %w", err)
 	}
 
+	connectorR := &controller.ConnectorReconciler{
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		Namespace: opts.Config.Namespace,
+	}
+	if err := connectorR.SetupWithManager(mgr); err != nil {
+		return nil, fmt.Errorf("setup connector reconciler: %w", err)
+	}
+
 	return mgr, nil
 }
 

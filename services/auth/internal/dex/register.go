@@ -20,4 +20,8 @@ func AddToScheme(scheme *runtime.Scheme) {
 	clientGV := OAuth2ClientGVK.GroupVersion()
 	scheme.AddKnownTypeWithName(OAuth2ClientGVK, &unstructured.Unstructured{})
 	scheme.AddKnownTypeWithName(clientGV.WithKind(KindOAuth2Client+"List"), &unstructured.UnstructuredList{})
+
+	connectorGV := ConnectorGVK.GroupVersion()
+	scheme.AddKnownTypeWithName(ConnectorGVK, &unstructured.Unstructured{})
+	scheme.AddKnownTypeWithName(connectorGV.WithKind(KindConnector+"List"), &unstructured.UnstructuredList{})
 }

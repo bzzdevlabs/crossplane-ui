@@ -13,10 +13,10 @@ metadata:
     app.kubernetes.io/component: {{ $component }}
 rules:
   - apiGroups: ["auth.crossplane-ui.io"]
-    resources: ["users", "groups"]
+    resources: ["users", "groups", "connectors"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: ["auth.crossplane-ui.io"]
-    resources: ["users/status", "groups/status"]
+    resources: ["users/status", "groups/status", "connectors/status"]
     verbs: ["get", "update", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -52,7 +52,7 @@ rules:
     resources: ["secrets"]
     verbs: ["get", "list", "watch", "update", "patch"]
   - apiGroups: ["dex.coreos.com"]
-    resources: ["passwords", "oauth2clients"]
+    resources: ["passwords", "oauth2clients", "connectors"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups: ["coordination.k8s.io"]
     resources: ["leases"]
