@@ -1,0 +1,44 @@
+# Sample LDAP connector. Tested against OpenLDAP and FreeIPA.
+# The bind password lives in a Secret in the release namespace; the auth
+# controller splices it into the Dex config at project time.
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: connector-corporate-ldap
+  namespace: crossplane-ui
+type: Opaque
+stringData:
+  bindPW: "CHANGE_ME"
+---
+apiVersion: auth.crossplane-ui.io/v1alpha1
+kind: Connector
+metadata:
+  name: corporate-ldap
+spec:
+  id: corporate-ldap
+  type: ldap
+  name: "Corporate LDAP"
+  config:
+    host: "ldap.example.com:636"
+    insecureNoSSL: false
+    insecureSkipVerify: false
+    bindDN: "cn=dex,ou=ServiceAccounts,dc=example,dc=com"
+    userSearch:
+      baseDN: "ou=People,dc=example,dc=com"
+      filter: "(objectClass=person)"
+      username: "uid"
+      idAttr: "uid"
+      emailAttr: "mail"
+      nameAttr: "cn"
+    groupSearch:
+      baseDN: "ou=Groups,dc=example,dc=com"
+      filter: "(objectClass=groupOfNames)"
+      userAttr: "DN"
+      groupAttr: "member"
+      nameAttr: "cn"
+  secretRefs:
+    - path: bindPW
+      secretRef:
+        name: connector-corporate-ldap
+        key: bindPW

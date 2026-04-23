@@ -53,7 +53,27 @@ in `User` CRDs managed by the `auth` service; all other identity sources
 
 ## Configuring connectors
 
-All samples below go under the `dex.config.connectors:` key of `values.yaml`.
+Since M10, connectors are first-class CRs
+(`Connector.auth.crossplane-ui.io/v1alpha1`) projected into Dex's
+Kubernetes storage (`Connector.dex.coreos.com/v1`) by the auth controller.
+Two equivalent surfaces exist:
+
+1. **UI** — navigate to *Users & Authentication → Connectors*, pick a
+   provider, fill the form, save. Secrets (client secret, LDAP bind
+   password, SAML CA) go into a companion `Secret` in the release
+   namespace; the controller splices them into the Dex config at project
+   time so plaintext never leaves that namespace.
+2. **GitOps** — write `Connector` CRs directly. Sample manifests for each
+   provider live in
+   [`deploy/examples/connectors/`](../deploy/examples/connectors/).
+
+Either way, Dex picks up the change on the next request — no restart is
+required (`storage.type: kubernetes`).
+
+Legacy `dex.config.connectors:` values in `values.yaml` still work but
+are **not** recommended: they bypass the UI, don't carry status, and
+rotations force a Dex pod recreation. Prefer the Connector CR.
+
 The upstream Dex documentation lists the full set of options:
 <https://dexidp.io/docs/connectors/>.
 
@@ -143,6 +163,67 @@ dex:
           orgs:
             - name: my-org
 ```
+
+## Connector CRs (recommended)
+
+The five manifests under
+[`deploy/examples/connectors/`](../deploy/examples/connectors/) are the
+recommended starting points. Each bundles a `Secret` for the plaintext
+value and a `Connector` CR referencing it:
+
+```yaml
+apiVersion: auth.crossplane-ui.io/v1alpha1
+kind: Connector
+metadata:
+  name: github
+spec:
+  id: github             # URL-safe, stable; used in /callback/{id}
+  type: github           # one of: ldap | saml | github | google | oidc
+  name: "GitHub"         # label shown on the Dex login chooser
+  config:                # native Dex connector config (opaque schema)
+    clientID: Iv1.012...
+    redirectURI: https://crossplane-ui.example.com/dex/callback
+    orgs:
+      - name: example-org
+  secretRefs:            # values spliced into .spec.config at project time
+    - path: clientSecret
+      secretRef:
+        name: connector-github
+        key: clientSecret
+  disabled: false        # temporarily hide without deleting the CR
+```
+
+The auth controller reconciles Connector CRs into
+`Connector.dex.coreos.com/v1` objects in the release namespace. `Ready`
+reports projection status; `Disabled` reports when the controller has
+intentionally pruned the Dex object.
+
+### UI walkthrough
+
+1. Sign in with the bootstrap admin (or anyone with
+   `connectors.auth.crossplane-ui.io` RBAC).
+2. Open *Users & Authentication → Connectors → Add connector*.
+3. Pick a provider. The form lists the fields Dex expects for that type;
+   secret fields (`clientSecret`, `bindPW`, SAML CA) write to a
+   namespace-local Secret named `connector-<id>`.
+4. Save. The new entry appears on the Dex login chooser on the next page
+   load.
+
+### Lifecycle
+
+- **Edit** — reopen the connector, change fields, save. Secret fields
+  left empty keep the existing Secret value. Non-secret fields are
+  overwritten.
+- **Rotate a secret** — reopen, type the new value, save. The controller
+  replaces the Secret key and reprojects the Dex config.
+- **Disable temporarily** — tick *Disabled*. The Dex Connector CR is
+  pruned so the IdP disappears from the chooser; flip it back to
+  reinstate.
+- **Delete** — removes the CR and the projected Dex object. The
+  connector Secret is left behind for audit; delete it manually if
+  needed.
+- **`id` is immutable** — changing it invalidates the existing IdP
+  redirect registration. Create a new connector instead.
 
 ## RBAC
 

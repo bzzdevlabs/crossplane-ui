@@ -1,0 +1,35 @@
+# Sample GitHub OAuth connector. Register an OAuth app under
+# Settings > Developer settings > OAuth apps on github.com (or your GHE
+# instance) and paste the client id/secret below.
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: connector-github
+  namespace: crossplane-ui
+type: Opaque
+stringData:
+  clientSecret: "CHANGE_ME"
+---
+apiVersion: auth.crossplane-ui.io/v1alpha1
+kind: Connector
+metadata:
+  name: github
+spec:
+  id: github
+  type: github
+  name: "GitHub"
+  config:
+    clientID: "Iv1.0123456789abcdef"
+    redirectURI: "https://crossplane-ui.example.com/dex/callback"
+    loadAllGroups: false
+    teamNameField: "slug"
+    orgs:
+      - name: "example-org"
+        # Leave `teams` unset to accept any team. Dex filters by team slug.
+        # teams: [engineering, platform]
+  secretRefs:
+    - path: clientSecret
+      secretRef:
+        name: connector-github
+        key: clientSecret

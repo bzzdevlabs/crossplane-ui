@@ -1,0 +1,30 @@
+# Sample Google Workspace OIDC connector. Create an OAuth 2.0 Web client
+# in the Google Cloud console and whitelist the Dex callback URL.
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: connector-google
+  namespace: crossplane-ui
+type: Opaque
+stringData:
+  clientSecret: "CHANGE_ME"
+---
+apiVersion: auth.crossplane-ui.io/v1alpha1
+kind: Connector
+metadata:
+  name: google
+spec:
+  id: google
+  type: google
+  name: "Google Workspace"
+  config:
+    clientID: "0123456789-abcdef.apps.googleusercontent.com"
+    redirectURI: "https://crossplane-ui.example.com/dex/callback"
+    hostedDomains:
+      - example.com
+  secretRefs:
+    - path: clientSecret
+      secretRef:
+        name: connector-google
+        key: clientSecret

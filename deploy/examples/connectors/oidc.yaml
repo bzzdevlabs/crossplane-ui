@@ -1,0 +1,33 @@
+# Sample generic OIDC connector. Works with Keycloak, Auth0, Okta OIDC,
+# Azure AD, Authelia, etc.
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: connector-oidc-keycloak
+  namespace: crossplane-ui
+type: Opaque
+stringData:
+  clientSecret: "CHANGE_ME"
+---
+apiVersion: auth.crossplane-ui.io/v1alpha1
+kind: Connector
+metadata:
+  name: keycloak
+spec:
+  id: keycloak
+  type: oidc
+  name: "Keycloak"
+  config:
+    issuer: "https://keycloak.example.com/realms/crossplane-ui"
+    clientID: "crossplane-ui"
+    redirectURI: "https://crossplane-ui.example.com/dex/callback"
+    insecureSkipEmailVerified: false
+    # Optional claim mapping if the IdP names them differently:
+    # userNameKey: preferred_username
+    # scopes: [openid, profile, email, groups]
+  secretRefs:
+    - path: clientSecret
+      secretRef:
+        name: connector-oidc-keycloak
+        key: clientSecret

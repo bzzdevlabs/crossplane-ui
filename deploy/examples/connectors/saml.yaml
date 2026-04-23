@@ -1,0 +1,36 @@
+# Sample SAML connector. Works against Okta, Azure AD (SAML), ADFS,
+# OneLogin, Shibboleth, Keycloak.
+# The IdP's CA bundle is provided via a Secret (PEM-encoded).
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: connector-saml-idp
+  namespace: crossplane-ui
+type: Opaque
+stringData:
+  ca.crt: |
+    -----BEGIN CERTIFICATE-----
+    # paste the IdP signing certificate here
+    -----END CERTIFICATE-----
+---
+apiVersion: auth.crossplane-ui.io/v1alpha1
+kind: Connector
+metadata:
+  name: saml-okta
+spec:
+  id: saml-okta
+  type: saml
+  name: "Okta (SAML)"
+  config:
+    ssoURL: "https://example.okta.com/app/sso/saml"
+    entityIssuer: "https://crossplane-ui.example.com"
+    redirectURI: "https://crossplane-ui.example.com/dex/callback"
+    usernameAttr: "name"
+    emailAttr: "email"
+    groupsAttr: "groups"
+  secretRefs:
+    - path: caData
+      secretRef:
+        name: connector-saml-idp
+        key: ca.crt
