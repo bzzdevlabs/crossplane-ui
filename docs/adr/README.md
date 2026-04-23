@@ -23,3 +23,5 @@ Michael Nygard — see <https://adr.github.io>.
 | 0003 | [Kubernetes user impersonation for RBAC](0003-k8s-impersonation-rbac.md)| Accepted |
 | 0004 | [Dex as the only authentication surface](0004-dex-as-auth-surface.md)  | Accepted |
 | 0005 | [Crossplane v2 only](0005-crossplane-v2-only.md)                       | Accepted |
+| 0006 | [UI shell: product-level nav + contextual sidebar + namespace scope](0006-ui-shell-product-nav-namespace-scope.md) | Accepted |
+| 0007 | [Resource view conventions & kind registry](0007-resource-view-conventions-kind-registry.md) | Accepted |
