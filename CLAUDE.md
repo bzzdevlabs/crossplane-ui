@@ -114,19 +114,16 @@ Port `8080` on the host is commonly taken; the compose gateway is remapped to
   redirects declaration output to `node_modules/.tmp/` to avoid stray
   `*.d.ts` at the repo root.
 - **CGO** is required for `go test -race` (the race runtime links via cgo).
-  The Alpine-based CI image installs `gcc musl-dev` and sets
+  GitHub's `ubuntu-latest` runner ships `gcc`; the workflow sets
   `CGO_ENABLED=1` before `go test`.
-- **GitLab CI images**: some images (`alpine/helm`, `cytopia/yamllint`) set
-  an `ENTRYPOINT` that breaks GitLab's shell wrapper — override with
-  `image: { name, entrypoint: [""] }` when adding new jobs on such images.
 
 ## CI scope (deliberately narrow right now)
 
-`.gitlab-ci.yml` currently ships only `lint` and `test` stages. Jobs for
-`build`, `package`, `scan` (Docker Scout; Trivy was dropped for the
-known-vuln reason) and `release` (semantic-release) are **present but fully
-commented out** — uncomment them when the project is ready to publish images
-and cut releases. License-scanning was removed.
+`.github/workflows/ci.yml` currently ships only `lint` and `test` jobs. Jobs
+for `build`, `package`, `scan` (Docker Scout; Trivy was dropped for the
+known-vuln reason) and `release` (semantic-release on GitHub) are **present
+but fully commented out** — uncomment them when the project is ready to
+publish images to GHCR and cut releases. License-scanning was removed.
 
 ## Commits and conventions
 
