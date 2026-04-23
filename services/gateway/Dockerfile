@@ -26,9 +26,9 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} \
     go build \
         -ldflags "-s -w \
-            -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/buildinfo.Version=${VERSION} \
-            -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/buildinfo.Commit=${COMMIT} \
-            -X gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui/services/gateway/internal/buildinfo.Date=${BUILD_DATE}" \
+            -X github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/buildinfo.Version=${VERSION} \
+            -X github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/buildinfo.Commit=${COMMIT} \
+            -X github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/buildinfo.Date=${BUILD_DATE}" \
         -o /out/gateway ./cmd
 
 # ---- Runtime ----
@@ -37,7 +37,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 FROM gcr.io/distroless/static-debian12:nonroot AS runtime
 
 LABEL org.opencontainers.image.title="crossplane-ui gateway"
-LABEL org.opencontainers.image.source="https://gitlab.telespazio-digital-factory.fr/icdo/tpzf/crossplane-ui"
+LABEL org.opencontainers.image.source="https://github.com/bzzdevlabs/crossplane-ui"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 USER 65532:65532
