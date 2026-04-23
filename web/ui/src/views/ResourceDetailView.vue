@@ -6,10 +6,15 @@ import { useRoute, useRouter } from 'vue-router';
 import FormShell from '@/components/forms/FormShell.vue';
 import type { Obj } from '@/components/forms/path';
 import { schemaForObject } from '@/components/forms/schemas';
+import ResourceDetailTemplate from '@/components/resources/ResourceDetailTemplate.vue';
+import Tabs from '@/components/ui/Tabs.vue';
+import { resourceKindById, statusFromConditions } from '@/resources/registry';
+import type { StatusVariant } from '@/resources/registry';
 import {
   applyResource,
   deleteResource,
   getResource,
+  type CrossplaneResource,
   type ResourceRef,
 } from '@/services/api';
 
@@ -19,24 +24,81 @@ const router = useRouter();
 
 const loading = ref(false);
 const saving = ref(false);
-const error = ref<string | null>(null);
+const errorMsg = ref<string | null>(null);
 const notice = ref<string | null>(null);
 const original = ref<Obj>({});
 const draft = ref<Obj>({});
+const activeTab = ref<'details' | 'yaml'>('details');
 
 const ref_ = computed<ResourceRef>(() => {
-  const params = route.params;
+  const params = route.params as Record<string, string | string[] | undefined>;
+  const query = route.query as Record<string, string | string[] | undefined>;
+  const resourceSlug = String(params.resource ?? '');
+  const kind = resourceKindById(resourceSlug);
+  const group = kind?.gvr?.group ?? (Array.isArray(query.group) ? query.group[0] : query.group ?? '');
+  const version =
+    kind?.gvr?.version ?? (Array.isArray(query.version) ? query.version[0] : query.version ?? '');
+  const resource = kind?.gvr?.resource ?? resourceSlug;
+  const namespaceRaw = Array.isArray(query.namespace) ? query.namespace[0] : query.namespace;
   return {
-    group: String(params.group ?? ''),
-    version: String(params.version ?? ''),
-    resource: String(params.resource ?? ''),
+    group: group ?? '',
+    version: version ?? '',
+    resource,
     name: String(params.name ?? ''),
-    namespace: (route.query.namespace as string) || undefined,
+    namespace: namespaceRaw || undefined,
   };
 });
 
 const schema = computed(() => schemaForObject(draft.value));
 const dirty = computed(() => JSON.stringify(draft.value) !== JSON.stringify(original.value));
+
+const title = computed(() => ref_.value.name);
+const kindLabel = computed(() => {
+  const obj = draft.value;
+  if (typeof obj.kind === 'string') return obj.kind;
+  return ref_.value.resource;
+});
+
+const metaParts = computed(() => {
+  const parts: string[] = [];
+  if (ref_.value.group) parts.push(`${ref_.value.group}/${ref_.value.version}`);
+  else if (ref_.value.version) parts.push(ref_.value.version);
+  parts.push(ref_.value.resource);
+  if (ref_.value.namespace) parts.push(ref_.value.namespace);
+  return parts;
+});
+
+const status = computed<StatusVariant | undefined>(() => {
+  const obj: Record<string, unknown> = draft.value;
+  const statusObj = obj.status ?? original.value.status;
+  const conds =
+    statusObj && typeof statusObj === 'object'
+      ? (statusObj as { conditions?: unknown }).conditions
+      : undefined;
+  if (!Array.isArray(conds)) return undefined;
+  const apiVersion = typeof obj.apiVersion === 'string' ? obj.apiVersion : '';
+  const kind = typeof obj.kind === 'string' ? obj.kind : '';
+  const mock: CrossplaneResource = {
+    apiVersion,
+    kind,
+    resource: ref_.value.resource,
+    name: ref_.value.name,
+    ready: 'Unknown',
+    synced: 'Unknown',
+    creationTimestamp: '',
+  };
+  let ready = 'Unknown';
+  let synced = 'Unknown';
+  for (const c of conds) {
+    if (!c || typeof c !== 'object') continue;
+    const rec = c as Record<string, unknown>;
+    const type = typeof rec.type === 'string' ? rec.type : '';
+    const st = typeof rec.status === 'string' ? rec.status : 'Unknown';
+    if (type === 'Ready') ready = st;
+    if (type === 'Synced') synced = st;
+  }
+  return statusFromConditions({ ...mock, ready, synced });
+});
 
 function stripServerFields(obj: Obj): Obj {
   const clone = structuredClone(obj);
@@ -53,7 +115,7 @@ function stripServerFields(obj: Obj): Obj {
 
 async function load(): Promise<void> {
   loading.value = true;
-  error.value = null;
+  errorMsg.value = null;
   notice.value = null;
   try {
     const obj = await getResource<Obj>(ref_.value);
@@ -61,7 +123,7 @@ async function load(): Promise<void> {
     original.value = editable;
     draft.value = structuredClone(editable);
   } catch (err) {
-    error.value = err instanceof Error ? err.message : String(err);
+    errorMsg.value = err instanceof Error ? err.message : String(err);
   } finally {
     loading.value = false;
   }
@@ -70,7 +132,7 @@ async function load(): Promise<void> {
 async function save(): Promise<void> {
   if (saving.value) return;
   saving.value = true;
-  error.value = null;
+  errorMsg.value = null;
   notice.value = null;
   try {
     const applied = await applyResource<Obj>(ref_.value, draft.value);
@@ -79,7 +141,7 @@ async function save(): Promise<void> {
     draft.value = structuredClone(editable);
     notice.value = t('resource.saved');
   } catch (err) {
-    error.value = err instanceof Error ? err.message : String(err);
+    errorMsg.value = err instanceof Error ? err.message : String(err);
   } finally {
     saving.value = false;
   }
@@ -88,132 +150,63 @@ async function save(): Promise<void> {
 async function remove(): Promise<void> {
   if (!window.confirm(t('resource.confirmDelete', { name: ref_.value.name }))) return;
   saving.value = true;
-  error.value = null;
+  errorMsg.value = null;
   try {
     await deleteResource(ref_.value);
-    await router.replace({ name: 'home' });
+    await router.replace({ name: 'crossplane-dashboard' });
   } catch (err) {
-    error.value = err instanceof Error ? err.message : String(err);
+    errorMsg.value = err instanceof Error ? err.message : String(err);
     saving.value = false;
   }
 }
+
+const tabs = computed(() => [
+  { id: 'details', label: t('resource.tabs.details') },
+  { id: 'yaml', label: t('resource.tabs.yaml') },
+]);
+
+const breadcrumbs = computed(() => [
+  { label: t('products.crossplane.label'), to: { name: 'crossplane-dashboard' } },
+  { label: ref_.value.resource },
+  { label: ref_.value.name },
+]);
 
 watch(ref_, load, { immediate: false });
 onMounted(load);
 </script>
 
 <template>
-  <section class="detail">
-    <nav class="breadcrumbs">
-      <RouterLink :to="{ name: 'home' }">{{ t('nav.home') }}</RouterLink>
-      <span>/</span>
-      <span>{{ ref_.resource }}</span>
-      <span>/</span>
-      <span class="current">{{ ref_.name }}</span>
-    </nav>
-
-    <header class="page-header">
-      <div>
-        <h1>{{ ref_.name }}</h1>
-        <p class="muted">{{ ref_.group || 'core' }}/{{ ref_.version }} · {{ ref_.resource }}</p>
-      </div>
-      <div class="actions">
-        <button type="button" :disabled="saving" @click="load">{{ t('home.refresh') }}</button>
-        <button type="button" class="danger" :disabled="saving" @click="remove">
-          {{ t('common.delete') }}
-        </button>
-        <button
-          type="button"
-          class="primary"
-          :disabled="saving || !dirty"
-          @click="save"
-        >
-          {{ saving ? t('resource.saving') : t('resource.apply') }}
-        </button>
-      </div>
-    </header>
-
-    <p v-if="error" class="error">{{ error }}</p>
+  <ResourceDetailTemplate
+    :title="title"
+    :kind="kindLabel"
+    :meta-parts="metaParts"
+    :status="status"
+    :breadcrumbs="breadcrumbs"
+    :saving="saving"
+    :can-apply="dirty"
+    @refresh="load"
+    @delete="remove"
+    @apply="save"
+  >
+    <p v-if="errorMsg" class="error">{{ errorMsg }}</p>
     <p v-if="notice" class="notice">{{ notice }}</p>
 
     <p v-if="loading" class="muted">{{ t('home.loading') }}</p>
-    <FormShell v-else v-model="draft" :form-component="schema?.component ?? null" />
-  </section>
+    <template v-else>
+      <Tabs v-model="activeTab" :tabs="tabs" />
+      <div class="tab-body">
+        <FormShell
+          v-if="activeTab === 'details'"
+          v-model="draft"
+          :form-component="schema?.component ?? null"
+        />
+        <FormShell v-else v-model="draft" :form-component="null" />
+      </div>
+    </template>
+  </ResourceDetailTemplate>
 </template>
 
 <style scoped>
-.detail {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.breadcrumbs {
-  display: flex;
-  gap: 0.35rem;
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-}
-
-.breadcrumbs a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.breadcrumbs .current {
-  color: var(--color-text);
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 1rem;
-}
-
-h1 {
-  margin: 0;
-  font-size: 1.3rem;
-}
-
-.muted {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-}
-
-.actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.actions button {
-  padding: 0.4rem 0.9rem;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-surface);
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.actions button[disabled] {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.actions .primary {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-}
-
-.actions .danger {
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-  background: transparent;
-}
-
 .error {
   color: var(--color-danger);
   margin: 0;
@@ -223,5 +216,14 @@ h1 {
 .notice {
   color: #1f7a3a;
   margin: 0;
+}
+
+.muted {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.tab-body {
+  margin-top: 0.75rem;
 }
 </style>

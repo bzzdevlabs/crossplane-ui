@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    component: () => import('@/layouts/DefaultLayout.vue'),
+    component: () => import('@/components/shell/AppShell.vue'),
     meta: { requiresAuth: true },
     children: [
       {
@@ -14,15 +14,34 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/HomeView.vue'),
       },
       {
-        path: 'resources/new',
+        path: 'crossplane',
+        name: 'crossplane-dashboard',
+        component: () => import('@/views/CrossplaneDashboardView.vue'),
+      },
+      {
+        path: 'crossplane/_create',
         name: 'resource-create',
         component: () => import('@/views/ResourceCreateView.vue'),
       },
       {
-        path: 'resources/:group/:version/:resource/:name',
+        path: 'crossplane/:resource',
+        name: 'resource-list',
+        component: () => import('@/views/ResourceListView.vue'),
+      },
+      {
+        path: 'crossplane/:resource/:name',
         name: 'resource-detail',
         component: () => import('@/views/ResourceDetailView.vue'),
-        props: true,
+      },
+      {
+        path: 'users',
+        name: 'users',
+        component: () => import('@/views/UsersView.vue'),
+      },
+      {
+        path: 'settings',
+        name: 'settings',
+        component: () => import('@/views/SettingsView.vue'),
       },
     ],
   },

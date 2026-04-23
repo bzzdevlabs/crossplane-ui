@@ -1,30 +1,39 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 
 import FormShell from '@/components/forms/FormShell.vue';
 import { FORM_SCHEMAS, type FormSchema } from '@/components/forms/schemas';
 import type { Obj } from '@/components/forms/path';
+import ResourceFormTemplate from '@/components/resources/ResourceFormTemplate.vue';
 import { applyResource, type ResourceRef } from '@/services/api';
 
 const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
 
-const selected = ref<FormSchema>(FORM_SCHEMAS[0]!);
-const object = ref<Obj>(FORM_SCHEMAS[0]!.skeleton());
+function initialSchema(): FormSchema {
+  const requested = route.query.kind;
+  const id = Array.isArray(requested) ? requested[0] : requested;
+  if (id) {
+    const match = FORM_SCHEMAS.find((s) => s.id === id);
+    if (match) return match;
+  }
+  return FORM_SCHEMAS[0]!;
+}
+
+const selected = ref<FormSchema>(initialSchema());
+const object = ref<Obj>(selected.value.skeleton());
 const saving = ref(false);
-const error = ref<string | null>(null);
+const errorMsg = ref<string | null>(null);
 
 watch(selected, (s) => {
   object.value = s.skeleton();
-  error.value = null;
+  errorMsg.value = null;
 });
 
 function pluralFromKind(kind: string): string {
-  // Best-effort English plural for ProviderConfig-style kinds the user types
-  // themselves. Crossplane CRDs in the wild use lowercased plurals; we
-  // mimic the kubebuilder default.
   const lower = kind.toLowerCase();
   if (lower.endsWith('s')) return lower;
   if (lower.endsWith('y')) return `${lower.slice(0, -1)}ies`;
@@ -45,8 +54,6 @@ function targetRef(): ResourceRef {
     };
   }
 
-  // Dynamic GVR (ProviderConfig and other provider-supplied kinds): derive
-  // group/version from the object's apiVersion and plural from kind.
   const apiVersion = typeof obj.apiVersion === 'string' ? obj.apiVersion : '';
   const kind = typeof obj.kind === 'string' ? obj.kind : '';
   if (!apiVersion || !kind) {
@@ -69,27 +76,37 @@ const canApply = computed(() => !saving.value);
 async function apply(): Promise<void> {
   if (!canApply.value) return;
   saving.value = true;
-  error.value = null;
+  errorMsg.value = null;
   try {
     const ref = targetRef();
     await applyResource(ref, object.value);
     await router.replace({
       name: 'resource-detail',
-      params: { group: ref.group, version: ref.version, resource: ref.resource, name: ref.name },
-      query: ref.namespace ? { namespace: ref.namespace } : undefined,
+      params: { resource: ref.resource, name: ref.name },
+      query: {
+        ...(ref.group ? { group: ref.group } : {}),
+        ...(ref.version ? { version: ref.version } : {}),
+        ...(ref.namespace ? { namespace: ref.namespace } : {}),
+      },
     });
   } catch (err) {
-    error.value = err instanceof Error ? err.message : String(err);
+    errorMsg.value = err instanceof Error ? err.message : String(err);
   } finally {
     saving.value = false;
   }
+}
+
+function goBack(): void {
+  void router.push({ name: 'crossplane-dashboard' });
 }
 </script>
 
 <template>
   <section class="create">
     <nav class="breadcrumbs">
-      <RouterLink :to="{ name: 'home' }">{{ t('nav.home') }}</RouterLink>
+      <RouterLink :to="{ name: 'crossplane-dashboard' }">
+        {{ t('products.crossplane.label') }}
+      </RouterLink>
       <span>/</span>
       <span class="current">{{ t('resource.create') }}</span>
     </nav>
@@ -99,24 +116,26 @@ async function apply(): Promise<void> {
         <h1>{{ t('resource.create') }}</h1>
         <p class="muted">{{ t('resource.createHint') }}</p>
       </div>
-      <div class="actions">
-        <label class="picker">
-          {{ t('resource.template') }}
-          <select v-model="selected">
-            <option v-for="tmpl in FORM_SCHEMAS" :key="tmpl.id" :value="tmpl">
-              {{ tmpl.label }}
-            </option>
-          </select>
-        </label>
-        <button type="button" class="primary" :disabled="!canApply" @click="apply">
-          {{ saving ? t('resource.saving') : t('resource.apply') }}
-        </button>
-      </div>
+      <label class="picker">
+        {{ t('resource.template') }}
+        <select v-model="selected">
+          <option v-for="tmpl in FORM_SCHEMAS" :key="tmpl.id" :value="tmpl">
+            {{ tmpl.label }}
+          </option>
+        </select>
+      </label>
     </header>
 
-    <p v-if="error" class="error">{{ error }}</p>
+    <p v-if="errorMsg" class="error">{{ errorMsg }}</p>
 
-    <FormShell v-model="object" :form-component="selected.component" />
+    <ResourceFormTemplate
+      :saving="saving"
+      :can-apply="canApply"
+      @cancel="goBack"
+      @apply="apply"
+    >
+      <FormShell v-model="object" :form-component="selected.component" />
+    </ResourceFormTemplate>
   </section>
 </template>
 
@@ -125,6 +144,7 @@ async function apply(): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  min-height: calc(100vh - 4rem);
 }
 
 .breadcrumbs {
@@ -162,12 +182,6 @@ h1 {
   font-size: 0.9rem;
 }
 
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
 .picker {
   display: flex;
   align-items: center;
@@ -183,21 +197,6 @@ h1 {
   background: var(--color-surface);
   color: inherit;
   font: inherit;
-}
-
-button.primary {
-  padding: 0.45rem 1rem;
-  border: 1px solid var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-  border-radius: 6px;
-  font: inherit;
-  cursor: pointer;
-}
-
-button.primary[disabled] {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .error {

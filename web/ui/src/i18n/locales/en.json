@@ -3,20 +3,53 @@
     "title": "crossplane-ui",
     "subtitle": "Admin UI for Crossplane v2"
   },
+  "products": {
+    "switcher": "Products",
+    "home": { "label": "Home", "subtitle": "Aggregated overview" },
+    "crossplane": {
+      "label": "Crossplane",
+      "subtitle": "Compositions, XRs, MRs, Providers, Functions",
+      "dashboard": "Crossplane overview"
+    },
+    "users": { "label": "Users & Authentication", "subtitle": "Users, groups, auth providers" },
+    "settings": { "label": "Settings", "subtitle": "Cluster-scoped configuration" }
+  },
   "nav": {
     "home": "Home",
     "compositions": "Compositions",
+    "xrds": "CompositeResourceDefinitions",
     "composites": "Composite resources",
     "managed": "Managed resources",
     "providers": "Providers",
     "functions": "Functions",
+    "providerConfigs": "Provider configs",
     "settings": "Settings",
     "users": "Users",
     "sections": {
       "cluster": "Cluster",
+      "overview": "Overview",
       "crossplane": "Crossplane",
-      "administration": "Administration"
+      "administration": "Administration",
+      "configuration": "Configuration"
     }
+  },
+  "kinds": {
+    "composition": { "label": "Composition", "plural": "Compositions" },
+    "xrd": { "label": "CompositeResourceDefinition", "plural": "CompositeResourceDefinitions" },
+    "composite": { "label": "Composite resource", "plural": "Composite resources" },
+    "managed": { "label": "Managed resource", "plural": "Managed resources" },
+    "provider": { "label": "Provider", "plural": "Providers" },
+    "function": { "label": "Function", "plural": "Functions" },
+    "providerconfig": { "label": "ProviderConfig", "plural": "ProviderConfigs" }
+  },
+  "columns": {
+    "name": "Name",
+    "kind": "Kind",
+    "namespace": "Namespace",
+    "status": "Status",
+    "synced": "Synced",
+    "age": "Age",
+    "created": "Created"
   },
   "auth": {
     "login": {
@@ -52,14 +85,31 @@
       "provider": "Providers",
       "function": "Functions"
     },
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "welcome": "Welcome to crossplane-ui",
+    "welcomeHint": "Manage your Crossplane v2 resources, users and settings. Everything you see here is scoped by your Kubernetes RBAC.",
+    "quickActions": "Quick actions",
+    "viewCrossplane": "Open Crossplane"
   },
   "status": {
     "ready": "Ready",
     "notReady": "Not ready",
     "synced": "Synced",
     "outOfSync": "Out of sync",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "variants": {
+      "ready": "Ready",
+      "degraded": "Degraded",
+      "pending": "Pending",
+      "errored": "Errored",
+      "unknown": "Unknown"
+    }
+  },
+  "namespace": {
+    "picker": "Namespace",
+    "all": "All namespaces",
+    "loading": "Loading namespaces…",
+    "errorLoading": "Failed to load namespaces"
   },
   "notFound": {
     "heading": "Page not found",
@@ -75,7 +125,14 @@
     "apply": "Apply",
     "retry": "Retry",
     "error": "Error",
-    "gateway": "Gateway"
+    "gateway": "Gateway",
+    "filter": "Filter",
+    "noRows": "No rows to display.",
+    "refresh": "Refresh",
+    "actions": "Actions",
+    "back": "Back",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "resource": {
     "apply": "Apply",
@@ -86,6 +143,20 @@
     "createHint": "Pick a kind, fill the form (or switch to YAML), apply.",
     "template": "Kind",
     "modeForm": "Form",
-    "modeYaml": "YAML"
+    "modeYaml": "YAML",
+    "tabs": {
+      "details": "Details",
+      "yaml": "YAML",
+      "events": "Events",
+      "related": "Related",
+      "conditions": "Conditions"
+    },
+    "list": {
+      "create": "Create",
+      "empty": "No resources of this kind yet."
+    },
+    "detail": {
+      "editAsYaml": "Edit as YAML"
+    }
   }
 }

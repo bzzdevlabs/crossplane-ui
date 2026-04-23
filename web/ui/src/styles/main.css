@@ -15,8 +15,10 @@
   --color-accent-subtle: #e7ecff;
   --color-on-accent: #fff;
   --color-danger: #c0392b;
+  --topbar-height: 3.25rem;
 
   font-family:
+    Lato,
     system-ui,
     -apple-system,
     'Segoe UI',

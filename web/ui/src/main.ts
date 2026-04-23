@@ -6,6 +6,9 @@ import { router } from './router';
 import { i18n } from './i18n';
 import { useAuthStore } from '@/stores/auth';
 
+import '@fontsource/lato/latin-400.css';
+import '@fontsource/lato/latin-700.css';
+import '@fontsource/lato/latin-900.css';
 import './styles/main.css';
 
 async function bootstrap(): Promise<void> {

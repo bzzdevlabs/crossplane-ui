@@ -28,6 +28,8 @@
     "type-check": "vue-tsc --build --force"
   },
   "dependencies": {
+    "@fontsource/lato": "^5.2.7",
+    "lucide-vue-next": "^1.0.0",
     "monaco-editor": "^0.55.1",
     "oidc-client-ts": "^3.5.0",
     "pinia": "^3.0.1",
