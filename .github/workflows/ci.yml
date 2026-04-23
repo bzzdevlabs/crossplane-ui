@@ -178,6 +178,7 @@ jobs:
   # Build — DISABLED. Re-enable by uncommenting when artefacts are needed.
   # ---------------------------------------------------------------------------
   build-ui:
+    needs: [lint-ui, test-ui]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -200,6 +201,7 @@ jobs:
           path: web/ui/dist/
 
   build-go:
+    needs: [lint-go, test-go]
     runs-on: ubuntu-latest
     env:
       CGO_ENABLED: "0"
@@ -221,7 +223,7 @@ jobs:
   # Package — DISABLED. Re-enable with build-* when images/charts ship to GHCR.
   # ---------------------------------------------------------------------------
   package-images:
-    needs: [build-ui, build-go]
+    needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui]
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
@@ -269,6 +271,7 @@ jobs:
             ghcr.io/bzzdevlabs/crossplane-ui/auth:latest
 
   package-chart:
+    needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -311,6 +314,7 @@ jobs:
   # Release — DISABLED. semantic-release with @semantic-release/github plugin.
   # ---------------------------------------------------------------------------
   release:
+    needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui, package-images]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
