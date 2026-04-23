@@ -173,160 +173,160 @@ jobs:
   # ---------------------------------------------------------------------------
   # Build — DISABLED. Re-enable by uncommenting when artefacts are needed.
   # ---------------------------------------------------------------------------
-  # build-ui:
-  #   runs-on: ubuntu-latest
-  #   defaults:
-  #     run:
-  #       working-directory: web/ui
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: pnpm/action-setup@v4
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: ${{ env.NODE_VERSION }}
-  #         cache: pnpm
-  #         cache-dependency-path: web/ui/pnpm-lock.yaml
-  #     - run: pnpm install --frozen-lockfile
-  #     - run: pnpm run build
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: ui-dist
-  #         path: web/ui/dist/
-  #
-  # build-go:
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     CGO_ENABLED: "0"
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: actions/setup-go@v5
-  #       with:
-  #         go-version: ${{ env.GO_VERSION }}
-  #     - run: |
-  #         mkdir -p bin
-  #         (cd services/gateway && go build -trimpath -o ../../bin/gateway ./cmd)
-  #         (cd services/auth    && go build -trimpath -o ../../bin/auth    ./cmd)
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: go-bins
-  #         path: bin/
+  build-ui:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web/ui
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: web/ui/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-dist
+          path: web/ui/dist/
+
+  build-go:
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - run: |
+          mkdir -p bin
+          (cd services/gateway && go build -trimpath -o ../../bin/gateway ./cmd)
+          (cd services/auth    && go build -trimpath -o ../../bin/auth    ./cmd)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: go-bins
+          path: bin/
 
   # ---------------------------------------------------------------------------
   # Package — DISABLED. Re-enable with build-* when images/charts ship to GHCR.
   # ---------------------------------------------------------------------------
-  # package-images:
-  #   needs: [build-ui, build-go]
-  #   if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: docker/setup-buildx-action@v3
-  #     - uses: docker/login-action@v3
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.actor }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
-  #     - name: Compute version
-  #       id: ver
-  #       run: |
-  #         if [[ $GITHUB_REF == refs/tags/* ]]; then
-  #           echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-  #         else
-  #           echo "version=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-  #         fi
-  #     - name: Build & push gateway
-  #       uses: docker/build-push-action@v6
-  #       with:
-  #         context: services/gateway
-  #         file: services/gateway/Dockerfile
-  #         push: true
-  #         build-args: |
-  #           VERSION=${{ steps.ver.outputs.version }}
-  #           COMMIT=${{ github.sha }}
-  #         tags: |
-  #           ghcr.io/bzzdevlabs/crossplane-ui/gateway:${{ steps.ver.outputs.version }}
-  #           ghcr.io/bzzdevlabs/crossplane-ui/gateway:latest
-  #     - name: Build & push auth
-  #       uses: docker/build-push-action@v6
-  #       with:
-  #         context: services/auth
-  #         file: services/auth/Dockerfile
-  #         push: true
-  #         build-args: |
-  #           VERSION=${{ steps.ver.outputs.version }}
-  #           COMMIT=${{ github.sha }}
-  #         tags: |
-  #           ghcr.io/bzzdevlabs/crossplane-ui/auth:${{ steps.ver.outputs.version }}
-  #           ghcr.io/bzzdevlabs/crossplane-ui/auth:latest
-  #
-  # package-chart:
-  #   if: startsWith(github.ref, 'refs/tags/v')
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: azure/setup-helm@v4
-  #       with:
-  #         version: ${{ env.HELM_VERSION }}
-  #     - run: helm repo add dex https://charts.dexidp.io
-  #     - run: helm dependency update deploy/helm/crossplane-ui
-  #     - run: mkdir -p dist && helm package deploy/helm/crossplane-ui --destination dist
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: helm-chart
-  #         path: dist/*.tgz
+  package-images:
+    needs: [build-ui, build-go]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compute version
+        id: ver
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build & push gateway
+        uses: docker/build-push-action@v6
+        with:
+          context: services/gateway
+          file: services/gateway/Dockerfile
+          push: true
+          build-args: |
+            VERSION=${{ steps.ver.outputs.version }}
+            COMMIT=${{ github.sha }}
+          tags: |
+            ghcr.io/bzzdevlabs/crossplane-ui/gateway:${{ steps.ver.outputs.version }}
+            ghcr.io/bzzdevlabs/crossplane-ui/gateway:latest
+      - name: Build & push auth
+        uses: docker/build-push-action@v6
+        with:
+          context: services/auth
+          file: services/auth/Dockerfile
+          push: true
+          build-args: |
+            VERSION=${{ steps.ver.outputs.version }}
+            COMMIT=${{ github.sha }}
+          tags: |
+            ghcr.io/bzzdevlabs/crossplane-ui/auth:${{ steps.ver.outputs.version }}
+            ghcr.io/bzzdevlabs/crossplane-ui/auth:latest
+
+  package-chart:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - run: helm repo add dex https://charts.dexidp.io
+      - run: helm dependency update deploy/helm/crossplane-ui
+      - run: mkdir -p dist && helm package deploy/helm/crossplane-ui --destination dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: helm-chart
+          path: dist/*.tgz
 
   # ---------------------------------------------------------------------------
   # Scan — DISABLED. Depends on published images. Uses Docker Scout (Trivy was
   # dropped for known-vulnerable image reasons).
   # ---------------------------------------------------------------------------
-  # scan-docker-scout:
-  #   needs: [package-images]
-  #   if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
-  #   runs-on: ubuntu-latest
-  #   continue-on-error: true
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: docker/login-action@v3
-  #       with:
-  #         registry: ghcr.io
-  #         username: ${{ github.actor }}
-  #         password: ${{ secrets.GITHUB_TOKEN }}
-  #     - name: Install Docker Scout
-  #       run: curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
-  #     - name: Scan gateway
-  #       run: docker scout cves --only-severity critical,high --exit-code 1 ghcr.io/bzzdevlabs/crossplane-ui/gateway:${GITHUB_SHA::7}
-  #     - name: Scan auth
-  #       run: docker scout cves --only-severity critical,high --exit-code 1 ghcr.io/bzzdevlabs/crossplane-ui/auth:${GITHUB_SHA::7}
+  scan-docker-scout:
+    needs: [package-images]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install Docker Scout
+        run: curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
+      - name: Scan gateway
+        run: docker scout cves --only-severity critical,high --exit-code 1 ghcr.io/bzzdevlabs/crossplane-ui/gateway:${GITHUB_SHA::7}
+      - name: Scan auth
+        run: docker scout cves --only-severity critical,high --exit-code 1 ghcr.io/bzzdevlabs/crossplane-ui/auth:${GITHUB_SHA::7}
 
   # ---------------------------------------------------------------------------
   # Release — DISABLED. semantic-release with @semantic-release/github plugin.
   # ---------------------------------------------------------------------------
-  # release:
-  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: write
-  #     issues: write
-  #     pull-requests: write
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #         persist-credentials: false
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: ${{ env.NODE_VERSION }}
-  #     - env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       run: |
-  #         npx --yes \
-  #           -p @semantic-release/github \
-  #           -p @semantic-release/commit-analyzer \
-  #           -p @semantic-release/release-notes-generator \
-  #           -p @semantic-release/changelog \
-  #           -p @semantic-release/git \
-  #           -p semantic-release \
-  #           semantic-release
+  release:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx --yes \
+            -p @semantic-release/github \
+            -p @semantic-release/commit-analyzer \
+            -p @semantic-release/release-notes-generator \
+            -p @semantic-release/changelog \
+            -p @semantic-release/git \
+            -p semantic-release \
+            semantic-release
