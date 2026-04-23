@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
       - run: helm repo add dex https://charts.dexidp.io
@@ -143,7 +143,7 @@ jobs:
       - name: Test ${{ matrix.module.name }}
         working-directory: ${{ matrix.module.path }}
         run: go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: go-coverage-${{ matrix.module.name }}
@@ -168,7 +168,7 @@ jobs:
           cache-dependency-path: web/ui/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test:coverage
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ui-coverage
@@ -196,7 +196,7 @@ jobs:
           cache-dependency-path: web/ui/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ui-dist
           path: web/ui/dist/
@@ -224,7 +224,7 @@ jobs:
       - name: Build ${{ matrix.service }}
         working-directory: services/${{ matrix.service }}
         run: go build -trimpath -o ../../bin/${{ matrix.service }} ./cmd
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: go-bin-${{ matrix.service }}
           path: bin/${{ matrix.service }}
@@ -259,7 +259,7 @@ jobs:
           fi
       - name: Build & push gateway
         id: push-gateway
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: services/gateway
           file: services/gateway/Dockerfile
@@ -275,14 +275,14 @@ jobs:
             ghcr.io/bzzdevlabs/crossplane-ui/gateway:${{ steps.ver.outputs.version }}
             ghcr.io/bzzdevlabs/crossplane-ui/gateway:latest
       - name: Attest gateway provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/bzzdevlabs/crossplane-ui/gateway
           subject-digest: ${{ steps.push-gateway.outputs.digest }}
           push-to-registry: true
       - name: Build & push auth
         id: push-auth
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           # auth Dockerfile expects the repo root as build context: its
           # go.mod uses `replace ../../pkg`, so pkg/ must be copyable.
@@ -298,7 +298,7 @@ jobs:
             ghcr.io/bzzdevlabs/crossplane-ui/auth:${{ steps.ver.outputs.version }}
             ghcr.io/bzzdevlabs/crossplane-ui/auth:latest
       - name: Attest auth provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/bzzdevlabs/crossplane-ui/auth
           subject-digest: ${{ steps.push-auth.outputs.digest }}
@@ -314,17 +314,17 @@ jobs:
       attestations: write
     steps:
       - uses: actions/checkout@v6
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
       - run: helm repo add dex https://charts.dexidp.io
       - run: helm dependency update deploy/helm/crossplane-ui
       - run: mkdir -p dist && helm package deploy/helm/crossplane-ui --destination dist
       - name: Attest chart provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*.tgz
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: helm-chart
           path: dist/*.tgz
