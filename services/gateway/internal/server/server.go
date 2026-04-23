@@ -46,8 +46,8 @@ type Server struct {
 }
 
 // New builds a Server ready to listen.
-func New(deps Deps) *Server {
-	s := &Server{deps: deps}
+func New(deps *Deps) *Server {
+	s := &Server{deps: *deps}
 
 	mux := http.NewServeMux()
 	s.registerOperational(mux)
@@ -100,6 +100,8 @@ func (s *Server) registerAPI(mux *http.ServeMux) {
 	if s.deps.CrossplaneFactory != nil {
 		apiMux.Handle("/api/v1/crossplane/resources",
 			api.CrossplaneResourcesHandler(s.deps.Logger, s.deps.CrossplaneFactory))
+		apiMux.Handle("/api/v1/crossplane/resource",
+			api.ResourceHandler(s.deps.Logger, s.deps.CrossplaneFactory))
 	}
 
 	mux.Handle("/api/v1/", s.deps.AuthMiddleware(apiMux))

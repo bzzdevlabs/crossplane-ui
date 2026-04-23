@@ -68,6 +68,6 @@ func NamespacesHandler(logger *slog.Logger, factory ClientFactory) http.Handler 
 			})
 		}
 
-		writeJSON(w, logger, http.StatusOK, NamespacesList{Items: out})
+		writeJSON(w, logger, NamespacesList{Items: out})
 	})
 }

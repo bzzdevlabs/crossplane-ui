@@ -47,6 +47,6 @@ func ConfigHandler(logger *slog.Logger, cfg *config.Config, version string) http
 				Scopes:    []string{"openid", "profile", "email", "groups", "offline_access"},
 			},
 		}
-		writeJSON(w, logger, http.StatusOK, payload)
+		writeJSON(w, logger, payload)
 	})
 }

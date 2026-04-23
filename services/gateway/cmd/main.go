@@ -69,7 +69,7 @@ func run() error {
 		return fmt.Errorf("auth middleware: %w", err)
 	}
 
-	srv := server.New(server.Deps{
+	srv := server.New(&server.Deps{
 		Logger:            logger,
 		Config:            cfg,
 		Registry:          reg,

@@ -50,7 +50,7 @@ func newTestServer(t *testing.T) (baseURL string, shutdown func()) {
 		LogLevel:          "info",
 		LogFormat:         "text",
 	}
-	s := server.New(server.Deps{
+	s := server.New(&server.Deps{
 		Logger:         logger,
 		Config:         cfg,
 		Registry:       metrics.New(),

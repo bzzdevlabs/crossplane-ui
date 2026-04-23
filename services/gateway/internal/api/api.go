@@ -24,9 +24,11 @@ type ClientFactory interface {
 	For(user string, groups []string) (kubernetes.Interface, error)
 }
 
-// writeJSON marshals v as an application/json response with the given status
-// code. Marshaling failures are logged and downgraded to 500.
-func writeJSON(w http.ResponseWriter, logger *slog.Logger, status int, v any) {
+// writeJSON marshals v as a 200 application/json response. Marshaling
+// failures are logged and downgraded to 500. Non-200 success codes should
+// go through a dedicated helper (we have none yet because every current
+// handler emits 200 on success).
+func writeJSON(w http.ResponseWriter, logger *slog.Logger, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	buf, err := json.Marshal(v)
 	if err != nil {
@@ -34,7 +36,7 @@ func writeJSON(w http.ResponseWriter, logger *slog.Logger, status int, v any) {
 		http.Error(w, `{"error":"internal_server_error"}`, http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(status)
+	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(buf)
 }
 
