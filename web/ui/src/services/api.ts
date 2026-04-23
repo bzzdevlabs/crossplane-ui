@@ -72,11 +72,12 @@ export function listNamespaces(): Promise<NamespacesResponse> {
   return apiFetch<NamespacesResponse>('/api/v1/namespaces');
 }
 
-export type ConditionStatus = 'True' | 'False' | 'Unknown' | string;
+export type ConditionStatus = string;
 
 export interface CrossplaneResource {
   readonly apiVersion: string;
   readonly kind: string;
+  readonly resource: string;
   readonly name: string;
   readonly namespace?: string;
   readonly ready: ConditionStatus;
@@ -96,4 +97,54 @@ export interface CrossplaneSummary {
 
 export function listCrossplaneResources(): Promise<CrossplaneSummary> {
   return apiFetch<CrossplaneSummary>('/api/v1/crossplane/resources');
+}
+
+export interface ResourceRef {
+  readonly group: string;
+  readonly version: string;
+  readonly resource: string;
+  readonly namespace?: string;
+  readonly name: string;
+}
+
+function resourceQuery(ref: ResourceRef, extra: Record<string, string> = {}): string {
+  const params = new URLSearchParams({
+    group: ref.group,
+    version: ref.version,
+    resource: ref.resource,
+    name: ref.name,
+    ...extra,
+  });
+  if (ref.namespace) {
+    params.set('namespace', ref.namespace);
+  }
+  return params.toString();
+}
+
+export function getResource<T = unknown>(ref: ResourceRef): Promise<T> {
+  return apiFetch<T>(`/api/v1/crossplane/resource?${resourceQuery(ref)}`);
+}
+
+export interface ApplyOptions {
+  readonly dryRun?: boolean;
+}
+
+export function applyResource<T = unknown>(
+  ref: ResourceRef,
+  object: unknown,
+  opts: ApplyOptions = {},
+): Promise<T> {
+  const extra: Record<string, string> = {};
+  if (opts.dryRun) extra.dryRun = 'All';
+  return apiFetch<T>(`/api/v1/crossplane/resource?${resourceQuery(ref, extra)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(object),
+  });
+}
+
+export function deleteResource(ref: ResourceRef): Promise<void> {
+  return apiFetch<void>(`/api/v1/crossplane/resource?${resourceQuery(ref)}`, {
+    method: 'DELETE',
+  });
 }

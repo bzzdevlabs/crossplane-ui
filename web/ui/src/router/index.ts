@@ -13,6 +13,17 @@ const routes: RouteRecordRaw[] = [
         name: 'home',
         component: () => import('@/views/HomeView.vue'),
       },
+      {
+        path: 'resources/new',
+        name: 'resource-create',
+        component: () => import('@/views/ResourceCreateView.vue'),
+      },
+      {
+        path: 'resources/:group/:version/:resource/:name',
+        name: 'resource-detail',
+        component: () => import('@/views/ResourceDetailView.vue'),
+        props: true,
+      },
     ],
   },
   {

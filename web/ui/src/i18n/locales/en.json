@@ -76,5 +76,14 @@
     "retry": "Retry",
     "error": "Error",
     "gateway": "Gateway"
+  },
+  "resource": {
+    "apply": "Apply",
+    "saving": "Applying…",
+    "saved": "Resource applied.",
+    "confirmDelete": "Delete {name}? This cannot be undone.",
+    "create": "Create resource",
+    "createHint": "Pick a template, edit the YAML, apply.",
+    "template": "Template"
   }
 }

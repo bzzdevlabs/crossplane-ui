@@ -50,6 +50,21 @@ function resourceKey(r: CrossplaneResource): string {
   return `${r.apiVersion}|${r.kind}|${r.namespace ?? ''}|${r.name}`;
 }
 
+function resourceRoute(r: CrossplaneResource): {
+  name: 'resource-detail';
+  params: Record<string, string>;
+  query?: Record<string, string>;
+} {
+  const parts = r.apiVersion.split('/');
+  const group = parts.length > 1 ? parts[0] : '';
+  const version = parts.length > 1 ? parts[1] : parts[0];
+  return {
+    name: 'resource-detail',
+    params: { group: group ?? '', version: version ?? '', resource: r.resource, name: r.name },
+    query: r.namespace ? { namespace: r.namespace } : undefined,
+  };
+}
+
 async function load(): Promise<void> {
   loading.value = true;
   error.value = null;
@@ -73,9 +88,14 @@ onMounted(load);
         <h1>{{ t('home.heading') }}</h1>
         <p class="muted">{{ t('home.crossplaneHint') }}</p>
       </div>
-      <button type="button" class="refresh" :disabled="loading" @click="load">
-        {{ t('home.refresh') }}
-      </button>
+      <div class="header-actions">
+        <RouterLink :to="{ name: 'resource-create' }" class="create-link">
+          + {{ t('resource.create') }}
+        </RouterLink>
+        <button type="button" class="refresh" :disabled="loading" @click="load">
+          {{ t('home.refresh') }}
+        </button>
+      </div>
     </header>
 
     <p v-if="loading" class="muted">{{ t('home.loading') }}</p>
@@ -95,28 +115,30 @@ onMounted(load);
         </p>
 
         <ul v-else-if="g.items.length > 0" class="tiles">
-          <li v-for="r in g.items" :key="resourceKey(r)" class="tile">
-            <div class="tile-head">
-              <div class="tile-title">{{ r.name }}</div>
-              <div class="tile-kind">{{ r.kind }}</div>
-            </div>
-            <div class="tile-meta">
-              <div class="badges">
-                <span :class="badgeClass(r.ready)" :title="`Ready=${r.ready}`">
-                  {{ badgeLabel(r.ready) }}
-                </span>
-                <span
-                  :class="badgeClass(r.synced)"
-                  :title="`Synced=${r.synced}`"
-                >
-                  {{ r.synced === 'True' ? t('status.synced') : t('status.outOfSync') }}
-                </span>
+          <li v-for="r in g.items" :key="resourceKey(r)">
+            <RouterLink class="tile" :to="resourceRoute(r)">
+              <div class="tile-head">
+                <div class="tile-title">{{ r.name }}</div>
+                <div class="tile-kind">{{ r.kind }}</div>
               </div>
-              <time :datetime="r.creationTimestamp">{{
-                new Date(r.creationTimestamp).toLocaleDateString()
-              }}</time>
-            </div>
-            <div v-if="r.namespace" class="tile-ns">{{ r.namespace }}</div>
+              <div class="tile-meta">
+                <div class="badges">
+                  <span :class="badgeClass(r.ready)" :title="`Ready=${r.ready}`">
+                    {{ badgeLabel(r.ready) }}
+                  </span>
+                  <span
+                    :class="badgeClass(r.synced)"
+                    :title="`Synced=${r.synced}`"
+                  >
+                    {{ r.synced === 'True' ? t('status.synced') : t('status.outOfSync') }}
+                  </span>
+                </div>
+                <time :datetime="r.creationTimestamp">{{
+                  new Date(r.creationTimestamp).toLocaleDateString()
+                }}</time>
+              </div>
+              <div v-if="r.namespace" class="tile-ns">{{ r.namespace }}</div>
+            </RouterLink>
           </li>
         </ul>
       </section>
@@ -162,6 +184,22 @@ h2 {
 
 .error {
   color: var(--color-danger);
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.create-link {
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 6px;
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  text-decoration: none;
+  font-size: 0.9rem;
 }
 
 .refresh {
@@ -220,6 +258,13 @@ h2 {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.1s ease;
+}
+
+.tile:hover {
+  border-color: var(--color-accent);
 }
 
 .tile-head {
