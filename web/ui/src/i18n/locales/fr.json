@@ -83,7 +83,9 @@
     "saved": "Ressource appliquée.",
     "confirmDelete": "Supprimer {name} ? Opération irréversible.",
     "create": "Créer une ressource",
-    "createHint": "Sélectionnez un modèle, éditez le YAML, appliquez.",
-    "template": "Modèle"
+    "createHint": "Choisissez un type, remplissez le formulaire (ou passez en YAML), appliquez.",
+    "template": "Type",
+    "modeForm": "Formulaire",
+    "modeYaml": "YAML"
   }
 }

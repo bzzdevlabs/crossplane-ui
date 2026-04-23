@@ -2,89 +2,81 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 
-import YamlEditor from '@/components/YamlEditor.vue';
+import FormShell from '@/components/forms/FormShell.vue';
+import { FORM_SCHEMAS, type FormSchema } from '@/components/forms/schemas';
+import type { Obj } from '@/components/forms/path';
 import { applyResource, type ResourceRef } from '@/services/api';
-
-interface Template {
-  readonly id: string;
-  readonly label: string;
-  readonly ref: Omit<ResourceRef, 'name'>;
-  readonly skeleton: Record<string, unknown>;
-}
-
-const TEMPLATES: readonly Template[] = [
-  {
-    id: 'composition',
-    label: 'Composition',
-    ref: { group: 'apiextensions.crossplane.io', version: 'v1', resource: 'compositions' },
-    skeleton: {
-      apiVersion: 'apiextensions.crossplane.io/v1',
-      kind: 'Composition',
-      metadata: { name: 'example-composition' },
-      spec: {
-        compositeTypeRef: { apiVersion: 'example.org/v1alpha1', kind: 'XExample' },
-        mode: 'Pipeline',
-        pipeline: [],
-      },
-    },
-  },
-  {
-    id: 'provider',
-    label: 'Provider',
-    ref: { group: 'pkg.crossplane.io', version: 'v1', resource: 'providers' },
-    skeleton: {
-      apiVersion: 'pkg.crossplane.io/v1',
-      kind: 'Provider',
-      metadata: { name: 'example-provider' },
-      spec: { package: 'xpkg.upbound.io/example/provider:v1.0.0' },
-    },
-  },
-  {
-    id: 'function',
-    label: 'Function',
-    ref: { group: 'pkg.crossplane.io', version: 'v1', resource: 'functions' },
-    skeleton: {
-      apiVersion: 'pkg.crossplane.io/v1',
-      kind: 'Function',
-      metadata: { name: 'example-function' },
-      spec: { package: 'xpkg.upbound.io/crossplane-contrib/function-go-templating:v0.9.0' },
-    },
-  },
-];
 
 const { t } = useI18n();
 const router = useRouter();
 
-const selected = ref<Template>(TEMPLATES[0]!);
-const draft = ref<string>(stringifyYaml(TEMPLATES[0]!.skeleton, { indent: 2 }));
+const selected = ref<FormSchema>(FORM_SCHEMAS[0]!);
+const object = ref<Obj>(FORM_SCHEMAS[0]!.skeleton());
 const saving = ref(false);
 const error = ref<string | null>(null);
 
-watch(selected, (tmpl) => {
-  draft.value = stringifyYaml(tmpl.skeleton, { indent: 2 });
+watch(selected, (s) => {
+  object.value = s.skeleton();
   error.value = null;
 });
 
-const canApply = computed(() => !saving.value && draft.value.trim().length > 0);
+function pluralFromKind(kind: string): string {
+  // Best-effort English plural for ProviderConfig-style kinds the user types
+  // themselves. Crossplane CRDs in the wild use lowercased plurals; we
+  // mimic the kubebuilder default.
+  const lower = kind.toLowerCase();
+  if (lower.endsWith('s')) return lower;
+  if (lower.endsWith('y')) return `${lower.slice(0, -1)}ies`;
+  return `${lower}s`;
+}
+
+function targetRef(): ResourceRef {
+  const obj = object.value;
+  const meta = (obj.metadata ?? {}) as Obj;
+  const name = typeof meta.name === 'string' ? meta.name : '';
+  if (!name) throw new Error('metadata.name is required');
+
+  if (selected.value.ref.resource !== '') {
+    return {
+      ...selected.value.ref,
+      namespace: typeof meta.namespace === 'string' ? meta.namespace : undefined,
+      name,
+    };
+  }
+
+  // Dynamic GVR (ProviderConfig and other provider-supplied kinds): derive
+  // group/version from the object's apiVersion and plural from kind.
+  const apiVersion = typeof obj.apiVersion === 'string' ? obj.apiVersion : '';
+  const kind = typeof obj.kind === 'string' ? obj.kind : '';
+  if (!apiVersion || !kind) {
+    throw new Error('apiVersion and kind are required');
+  }
+  const [group, version] = apiVersion.includes('/')
+    ? apiVersion.split('/')
+    : ['', apiVersion];
+  return {
+    group: group ?? '',
+    version: version ?? '',
+    resource: pluralFromKind(kind),
+    namespace: typeof meta.namespace === 'string' ? meta.namespace : undefined,
+    name,
+  };
+}
+
+const canApply = computed(() => !saving.value);
 
 async function apply(): Promise<void> {
   if (!canApply.value) return;
   saving.value = true;
   error.value = null;
   try {
-    const parsed = parseYaml(draft.value) as Record<string, unknown>;
-    const meta = (parsed.metadata ?? {}) as Record<string, unknown>;
-    const name = typeof meta.name === 'string' ? meta.name : '';
-    if (!name) {
-      throw new Error('metadata.name is required');
-    }
-    const ref: ResourceRef = { ...selected.value.ref, name };
-    await applyResource(ref, parsed);
+    const ref = targetRef();
+    await applyResource(ref, object.value);
     await router.replace({
       name: 'resource-detail',
-      params: { ...selected.value.ref, name },
+      params: { group: ref.group, version: ref.version, resource: ref.resource, name: ref.name },
+      query: ref.namespace ? { namespace: ref.namespace } : undefined,
     });
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err);
@@ -111,17 +103,12 @@ async function apply(): Promise<void> {
         <label class="picker">
           {{ t('resource.template') }}
           <select v-model="selected">
-            <option v-for="tmpl in TEMPLATES" :key="tmpl.id" :value="tmpl">
+            <option v-for="tmpl in FORM_SCHEMAS" :key="tmpl.id" :value="tmpl">
               {{ tmpl.label }}
             </option>
           </select>
         </label>
-        <button
-          type="button"
-          class="primary"
-          :disabled="!canApply"
-          @click="apply"
-        >
+        <button type="button" class="primary" :disabled="!canApply" @click="apply">
           {{ saving ? t('resource.saving') : t('resource.apply') }}
         </button>
       </div>
@@ -129,7 +116,7 @@ async function apply(): Promise<void> {
 
     <p v-if="error" class="error">{{ error }}</p>
 
-    <YamlEditor v-model="draft" />
+    <FormShell v-model="object" :form-component="selected.component" />
   </section>
 </template>
 

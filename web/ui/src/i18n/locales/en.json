@@ -83,7 +83,9 @@
     "saved": "Resource applied.",
     "confirmDelete": "Delete {name}? This cannot be undone.",
     "create": "Create resource",
-    "createHint": "Pick a template, edit the YAML, apply.",
-    "template": "Template"
+    "createHint": "Pick a kind, fill the form (or switch to YAML), apply.",
+    "template": "Kind",
+    "modeForm": "Form",
+    "modeYaml": "YAML"
   }
 }

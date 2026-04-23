@@ -2,9 +2,10 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
-import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 
-import YamlEditor from '@/components/YamlEditor.vue';
+import FormShell from '@/components/forms/FormShell.vue';
+import type { Obj } from '@/components/forms/path';
+import { schemaForObject } from '@/components/forms/schemas';
 import {
   applyResource,
   deleteResource,
@@ -20,8 +21,8 @@ const loading = ref(false);
 const saving = ref(false);
 const error = ref<string | null>(null);
 const notice = ref<string | null>(null);
-const original = ref<string>('');
-const draft = ref<string>('');
+const original = ref<Obj>({});
+const draft = ref<Obj>({});
 
 const ref_ = computed<ResourceRef>(() => {
   const params = route.params;
@@ -34,11 +35,12 @@ const ref_ = computed<ResourceRef>(() => {
   };
 });
 
-const dirty = computed(() => draft.value !== original.value);
+const schema = computed(() => schemaForObject(draft.value));
+const dirty = computed(() => JSON.stringify(draft.value) !== JSON.stringify(original.value));
 
-function stripServerFields(obj: Record<string, unknown>): Record<string, unknown> {
+function stripServerFields(obj: Obj): Obj {
   const clone = structuredClone(obj);
-  const meta = (clone.metadata ?? {}) as Record<string, unknown>;
+  const meta = (clone.metadata ?? {}) as Obj;
   delete meta.managedFields;
   delete meta.resourceVersion;
   delete meta.uid;
@@ -54,11 +56,10 @@ async function load(): Promise<void> {
   error.value = null;
   notice.value = null;
   try {
-    const obj = await getResource<Record<string, unknown>>(ref_.value);
+    const obj = await getResource<Obj>(ref_.value);
     const editable = stripServerFields(obj);
-    const yaml = stringifyYaml(editable, { indent: 2, lineWidth: 0 });
-    original.value = yaml;
-    draft.value = yaml;
+    original.value = editable;
+    draft.value = structuredClone(editable);
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err);
   } finally {
@@ -72,12 +73,10 @@ async function save(): Promise<void> {
   error.value = null;
   notice.value = null;
   try {
-    const parsed = parseYaml(draft.value) as Record<string, unknown>;
-    const applied = (await applyResource<Record<string, unknown>>(ref_.value, parsed));
+    const applied = await applyResource<Obj>(ref_.value, draft.value);
     const editable = stripServerFields(applied);
-    const yaml = stringifyYaml(editable, { indent: 2, lineWidth: 0 });
-    original.value = yaml;
-    draft.value = yaml;
+    original.value = editable;
+    draft.value = structuredClone(editable);
     notice.value = t('resource.saved');
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err);
@@ -87,9 +86,7 @@ async function save(): Promise<void> {
 }
 
 async function remove(): Promise<void> {
-  if (!window.confirm(t('resource.confirmDelete', { name: ref_.value.name }))) {
-    return;
-  }
+  if (!window.confirm(t('resource.confirmDelete', { name: ref_.value.name }))) return;
   saving.value = true;
   error.value = null;
   try {
@@ -140,7 +137,7 @@ onMounted(load);
     <p v-if="notice" class="notice">{{ notice }}</p>
 
     <p v-if="loading" class="muted">{{ t('home.loading') }}</p>
-    <YamlEditor v-else v-model="draft" />
+    <FormShell v-else v-model="draft" :form-component="schema?.component ?? null" />
   </section>
 </template>
 
