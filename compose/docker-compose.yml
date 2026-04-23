@@ -54,8 +54,8 @@ services:
 
   gateway:
     build:
-      context: ../services/gateway
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: services/gateway/Dockerfile
     container_name: crossplane-ui-gateway
     environment:
       HTTP_ADDR: ":8080"

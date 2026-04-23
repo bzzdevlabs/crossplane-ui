@@ -233,7 +233,7 @@ jobs:
   # Package (tag-only). Ships images to GHCR and chart tarball.
   # ---------------------------------------------------------------------------
   package-images:
-    needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui]
+    needs: [build-go, build-ui]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
@@ -261,7 +261,9 @@ jobs:
         id: push-gateway
         uses: docker/build-push-action@v6
         with:
-          context: services/gateway
+          # gateway Dockerfile needs the repo root: it embeds the Vue SPA
+          # (web/ui/) and shares the Go workspace (pkg/, services/auth/).
+          context: .
           file: services/gateway/Dockerfile
           push: true
           # In-toto provenance + SBOM baked into the image manifest. Max mode
@@ -305,7 +307,7 @@ jobs:
           push-to-registry: true
 
   package-chart:
-    needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui]
+    needs: [lint-helm, lint-yaml, build-go, build-ui]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:

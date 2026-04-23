@@ -1,0 +1,5 @@
+# The production UI bundle is copied here by the Dockerfile multi-stage build.
+# Keep only the placeholder index.html committed (checked via !) so the embed
+# directive always has a file to point at.
+dist/*
+!dist/index.html
