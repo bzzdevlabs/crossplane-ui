@@ -11,8 +11,8 @@ ones add Crossplane-specific functionality.
 | ~~M3~~ ✓  | Auth: `User` / `Group` CRDs, controller-runtime reconciler, bootstrap admin, bcrypt, Dex config sync. | `kubectl get users` works after `helm install`.    |
 | ~~M4~~ ✓  | Helm polish + Dex wiring end-to-end (password DB connector from Auth).                                | `helm install` → login as admin succeeds.          |
 | ~~M5~~ ✓  | UI: OIDC PKCE login flow, Rancher-inspired shell (nav, topbar), session store, home namespaces list. | Browser login end-to-end; matches Rancher look.    |
-| **M6**    | Home dashboard: card/tile view of all Compositions/XRs/MRs with aggregated ready/sync status.         | Dashboard renders live status from kube.           |
-| **M7**    | List & detail views Rancher-like: YAML editor (monaco), apply/diff, delete, create from template.     | Full CRUD on Crossplane resources via UI.          |
+| ~~M6~~ ✓  | Home dashboard: card/tile view of all Compositions/XRs/MRs with aggregated ready/sync status.         | Dashboard renders live status from kube.           |
+| ~~M7~~ ✓  | Detail view Rancher-like: monaco YAML editor, apply (server-side), delete, create-from-template.     | Full CRUD on Crossplane resources via UI.          |
 | **M8**    | Configuration (form) views for Composition, XR, Provider, Function, ProviderConfig.                   | Typed forms for the 5 most common kinds.           |
 | **M9**    | SSO: Dex connectors UI (LDAP / SAML / GitHub / Google), docs, sample `values.yaml` per provider.      | SSO login end-to-end against test IdP.             |
 | **M10**   | Playwright e2e, `helm unittest`, `semantic-release`, chart publishing, v1.0.0 GA.                     | GA artefacts released by CI.                       |
