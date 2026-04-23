@@ -17,6 +17,7 @@ import (
 	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/config"
 	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/metrics"
 	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/middleware"
+	"github.com/bzzdevlabs/crossplane-ui/services/gateway/internal/webui"
 )
 
 // Deps bundles the heavyweight collaborators the server needs to run.
@@ -52,6 +53,9 @@ func New(deps *Deps) *Server {
 	mux := http.NewServeMux()
 	s.registerOperational(mux)
 	s.registerAPI(mux)
+	// SPA catch-all; longest-prefix match means /api/v1/*, /healthz, /readyz
+	// and /metrics still win over "/".
+	mux.Handle("/", webui.Handler())
 
 	// Outer chain applied to every route. Order matters:
 	//   Recover   — captures panics from every later layer
