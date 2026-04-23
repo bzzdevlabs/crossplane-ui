@@ -1,14 +1,15 @@
 # GitHub Actions CI — crossplane-ui
 #
 # Event gating:
-#   - push to main    → lint + test + build (validates merge-readiness).
-#   - pull_request    → lint + test + build (same validation for PRs, incl. dependabot).
+#   - push to main    → lint + test + build + release (semantic-release,
+#                       may push a v* tag).
+#   - pull_request    → lint + test + build (validation for PRs, incl. dependabot).
 #   - push of v* tag  → lint + test + build + package-images + package-chart
-#                       + scan + release (attestations, SBOM, GHCR publish).
+#                       + scan (attestations, SBOM, GHCR publish).
 #
-# Release, image packaging, chart packaging and scanning therefore only run
-# when a version tag is pushed. Every dependabot PR run is bounded to the
-# validation jobs above — no images or releases escape.
+# Packaging and scanning only run when a version tag is pushed — typically
+# by semantic-release, which runs on main push. Dependabot PRs are bounded
+# to validation jobs.
 
 name: CI
 
@@ -347,16 +348,20 @@ jobs:
       - name: Install Docker Scout
         run: curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
       - name: Scan gateway
-        run: docker scout cves --only-severity critical,high --exit-code 1 ghcr.io/bzzdevlabs/crossplane-ui/gateway:${GITHUB_SHA::7}
+        run: docker scout cves --only-severity critical,high --exit-code ghcr.io/bzzdevlabs/crossplane-ui/gateway:${GITHUB_REF_NAME}
       - name: Scan auth
-        run: docker scout cves --only-severity critical,high --exit-code 1 ghcr.io/bzzdevlabs/crossplane-ui/auth:${GITHUB_SHA::7}
+        run: docker scout cves --only-severity critical,high --exit-code ghcr.io/bzzdevlabs/crossplane-ui/auth:${GITHUB_REF_NAME}
 
   # ---------------------------------------------------------------------------
   # Release (tag-only). semantic-release with @semantic-release/github plugin.
   # ---------------------------------------------------------------------------
   release:
-    needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui, package-images]
-    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
+    # semantic-release analyzes Conventional Commits on main and, when a
+    # release is warranted, pushes a v* tag + GitHub Release. The tag push
+    # then re-enters this workflow and triggers package-images / chart /
+    # scan. Keep release on main-push (not on tags) to avoid a loop.
+    needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
