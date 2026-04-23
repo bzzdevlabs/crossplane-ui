@@ -1,13 +1,14 @@
 # GitHub Actions CI — crossplane-ui
 #
-# Mirrors the former .gitlab-ci.yml: `lint` and `test` stages only. The
-# build / package / scan / release jobs are intentionally disabled (commented
-# out at the bottom) until the project is ready to publish images, charts and
-# releases. Uncomment each block when needed.
+# Event gating:
+#   - push to main    → lint + test + build (validates merge-readiness).
+#   - pull_request    → lint + test + build (same validation for PRs, incl. dependabot).
+#   - push of v* tag  → lint + test + build + package-images + package-chart
+#                       + scan + release (attestations, SBOM, GHCR publish).
 #
-# Philosophy carried over from the GitLab pipeline:
-#   - CI runs the same `task` commands developers use locally.
-#   - Every job is reproducible: pinned tool versions, no floating tags.
+# Release, image packaging, chart packaging and scanning therefore only run
+# when a version tag is pushed. Every dependabot PR run is bounded to the
+# validation jobs above — no images or releases escape.
 
 name: CI
 
@@ -36,8 +37,15 @@ jobs:
   # Lint
   # ---------------------------------------------------------------------------
   lint-go:
-    name: lint:go
+    name: lint:go (${{ matrix.module.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - { name: gateway, path: services/gateway }
+          - { name: auth, path: services/auth }
+          - { name: pkg, path: pkg }
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-go@v6
@@ -50,14 +58,8 @@ jobs:
             pkg/go.sum
       - name: Install golangci-lint from source
         run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${{ env.GOLANGCI_LINT_VERSION }}
-      - name: Lint gateway
-        working-directory: services/gateway
-        run: golangci-lint run ./...
-      - name: Lint auth
-        working-directory: services/auth
-        run: golangci-lint run ./...
-      - name: Lint pkg
-        working-directory: pkg
+      - name: Lint ${{ matrix.module.name }}
+        working-directory: ${{ matrix.module.path }}
         run: golangci-lint run ./...
 
   lint-ui:
@@ -115,8 +117,15 @@ jobs:
   # Test
   # ---------------------------------------------------------------------------
   test-go:
-    name: test:go
+    name: test:go (${{ matrix.module.name }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - { name: gateway, path: services/gateway }
+          - { name: auth, path: services/auth }
+          - { name: pkg, path: pkg }
     env:
       # -race links the race runtime via cgo.
       CGO_ENABLED: "1"
@@ -130,23 +139,14 @@ jobs:
             services/gateway/go.sum
             services/auth/go.sum
             pkg/go.sum
-      - name: Test gateway
-        working-directory: services/gateway
-        run: go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
-      - name: Test auth
-        working-directory: services/auth
-        run: go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
-      - name: Test pkg
-        working-directory: pkg
+      - name: Test ${{ matrix.module.name }}
+        working-directory: ${{ matrix.module.path }}
         run: go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: go-coverage
-          path: |
-            services/gateway/coverage.txt
-            services/auth/coverage.txt
-            pkg/coverage.txt
+          name: go-coverage-${{ matrix.module.name }}
+          path: ${{ matrix.module.path }}/coverage.txt
           if-no-files-found: ignore
 
   test-ui:
@@ -175,7 +175,7 @@ jobs:
           if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------
-  # Build — DISABLED. Re-enable by uncommenting when artefacts are needed.
+  # Build
   # ---------------------------------------------------------------------------
   build-ui:
     needs: [lint-ui, test-ui]
@@ -201,8 +201,13 @@ jobs:
           path: web/ui/dist/
 
   build-go:
+    name: build:go (${{ matrix.service }})
     needs: [lint-go, test-go]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [gateway, auth]
     env:
       CGO_ENABLED: "0"
     steps:
@@ -210,21 +215,25 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
-      - run: |
-          mkdir -p bin
-          (cd services/gateway && go build -trimpath -o ../../bin/gateway ./cmd)
-          (cd services/auth    && go build -trimpath -o ../../bin/auth    ./cmd)
+          cache-dependency-path: |
+            go.work
+            services/gateway/go.sum
+            services/auth/go.sum
+            pkg/go.sum
+      - name: Build ${{ matrix.service }}
+        working-directory: services/${{ matrix.service }}
+        run: go build -trimpath -o ../../bin/${{ matrix.service }} ./cmd
       - uses: actions/upload-artifact@v4
         with:
-          name: go-bins
-          path: bin/
+          name: go-bin-${{ matrix.service }}
+          path: bin/${{ matrix.service }}
 
   # ---------------------------------------------------------------------------
-  # Package — DISABLED. Re-enable with build-* when images/charts ship to GHCR.
+  # Package (tag-only). Ships images to GHCR and chart tarball.
   # ---------------------------------------------------------------------------
   package-images:
     needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui]
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -320,12 +329,12 @@ jobs:
           path: dist/*.tgz
 
   # ---------------------------------------------------------------------------
-  # Scan — DISABLED. Depends on published images. Uses Docker Scout (Trivy was
-  # dropped for known-vulnerable image reasons).
+  # Scan (tag-only). Docker Scout against the just-pushed images. Trivy was
+  # dropped because the upstream image itself shipped known-vulnerable libs.
   # ---------------------------------------------------------------------------
   scan-docker-scout:
     needs: [package-images]
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -343,11 +352,11 @@ jobs:
         run: docker scout cves --only-severity critical,high --exit-code 1 ghcr.io/bzzdevlabs/crossplane-ui/auth:${GITHUB_SHA::7}
 
   # ---------------------------------------------------------------------------
-  # Release — DISABLED. semantic-release with @semantic-release/github plugin.
+  # Release (tag-only). semantic-release with @semantic-release/github plugin.
   # ---------------------------------------------------------------------------
   release:
     needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui, package-images]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: startsWith(github.ref, 'refs/tags/v') && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
