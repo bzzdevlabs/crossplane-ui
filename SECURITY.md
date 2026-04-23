@@ -15,7 +15,7 @@ Until we reach the `v1.0.0` milestone only the `main` branch is supported. After
 **Please do not open a public issue for security reports.**
 
 Report vulnerabilities privately by email to
-[quentin.gerard@telespazio.com](mailto:quentin.gerard@telespazio.com) with
+[quentingerard8@gmail.com](mailto:quentingerard8@gmail.com) with
 the subject prefix `[crossplane-ui][security]`. Encrypt the message with the
 maintainer's PGP key (fingerprint advertised on the same email address's
 Keybase / key server listing).
