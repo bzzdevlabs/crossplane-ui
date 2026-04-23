@@ -54,12 +54,9 @@
 
   "yaml.schemas": {
     "https://json.schemastore.org/chart.json": "deploy/helm/**/Chart.yaml",
-    "https://raw.githubusercontent.com/helm/helm/main/cmd/helm/testdata/testcharts/values.schema.json": "deploy/helm/**/values.yaml"
+    "deploy/helm/crossplane-ui/values.schema.json": "deploy/helm/**/values.yaml"
   },
-  "yaml.customTags": [
-    "!reference sequence",
-    "!include scalar"
-  ],
+  "yaml.customTags": ["!reference sequence", "!include scalar"],
   "yaml.format.enable": true,
 
   "files.associations": {
