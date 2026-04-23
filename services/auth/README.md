@@ -58,10 +58,9 @@ services/auth/
 
 The `User` and `Group` Go types live in
 [`pkg/apis/auth/v1alpha1`](../../pkg/apis/auth/v1alpha1). Their CRD
-manifests are generated from the source types and committed under
-[`deploy/crds/`](../../deploy/crds) and the chart's
-[`crds/`](../../deploy/helm/crossplane-ui/crds) directory. Regenerate them
-with `task generate`.
+manifests are generated from the source types into the chart's
+[`crds/`](../../deploy/helm/crossplane-ui/crds) directory — Helm 3
+auto-applies them on install. Regenerate with `task generate`.
 
 ## Milestones in this service
 

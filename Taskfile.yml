@@ -47,9 +47,9 @@ tasks:
     desc: Regenerate deepcopy methods and CRD manifests.
     cmds:
       - controller-gen object paths="./pkg/apis/..."
-      - controller-gen crd paths="./pkg/apis/..." output:crd:dir=deploy/crds
-      # Mirror into the Helm chart's crds/ dir so `helm install` ships them.
-      - cp deploy/crds/*.yaml deploy/helm/crossplane-ui/crds/
+      # Emit CRDs directly into the chart's crds/ dir — Helm 3 auto-applies
+      # them on install. Dex upstream CRDs live alongside these.
+      - controller-gen crd paths="./pkg/apis/..." output:crd:dir=deploy/helm/crossplane-ui/crds
 
   # -------------------------------------------------------------------------
   # Linting
@@ -257,6 +257,7 @@ tasks:
     cmds:
       - task: dev:cluster
       - task: dev:crossplane
+      - task: dev:crds
       - task: dev:kubeconfig
       - task: dev:compose
       - |
@@ -319,6 +320,18 @@ tasks:
           --version 2.2.0 \
           --wait --timeout=5m
       - echo "✓ Crossplane v2.2 ready in crossplane-system"
+
+  dev:crds:
+    desc: Apply crossplane-ui + Dex CRDs to the k3d cluster.
+    internal: true
+    env:
+      KUBECONFIG:
+        sh: k3d kubeconfig write crossplane-ui
+    cmds:
+      # Helm install applies these via chart crds/, but the dev stack runs the
+      # Go services under docker-compose — not the chart — so apply them here.
+      - kubectl apply -f deploy/helm/crossplane-ui/crds/
+      - echo "✓ CRDs applied (auth.crossplane-ui.io + dex.coreos.com)"
 
   dev:kubeconfig:
     desc: Generate compose/.kubeconfig pointing at the internal k3d DNS name.
