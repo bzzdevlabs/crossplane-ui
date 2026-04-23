@@ -274,7 +274,9 @@ jobs:
         id: push-auth
         uses: docker/build-push-action@v6
         with:
-          context: services/auth
+          # auth Dockerfile expects the repo root as build context: its
+          # go.mod uses `replace ../../pkg`, so pkg/ must be copyable.
+          context: .
           file: services/auth/Dockerfile
           push: true
           provenance: mode=max
