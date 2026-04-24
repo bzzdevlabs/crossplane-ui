@@ -25,3 +25,5 @@ Michael Nygard — see <https://adr.github.io>.
 | 0005 | [Crossplane v2 only](0005-crossplane-v2-only.md)                       | Accepted |
 | 0006 | [UI shell: product-level nav + contextual sidebar + namespace scope](0006-ui-shell-product-nav-namespace-scope.md) | Accepted |
 | 0007 | [Resource view conventions & kind registry](0007-resource-view-conventions-kind-registry.md) | Accepted |
+| 0008 | [Release Please for versioning and release automation](0008-release-please-for-versioning.md) | Accepted |
+| 0009 | [Helm chart distribution via OCI](0009-helm-chart-oci-distribution.md) | Accepted |
