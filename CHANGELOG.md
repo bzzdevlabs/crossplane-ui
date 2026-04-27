@@ -41,6 +41,19 @@ commit history (see [CONTRIBUTING.md](CONTRIBUTING.md) for the commit
 conventions, and [ADR-0008](docs/adr/0008-release-please-for-versioning.md)
 for the decision rationale).
 
+## [1.1.1](https://github.com/bzzdevlabs/crossplane-ui/compare/v1.1.0...v1.1.1) (2026-04-27)
+
+
+### Documentation
+
+* **adr:** record Release Please + Helm OCI distribution decisions ([d4bd7c7](https://github.com/bzzdevlabs/crossplane-ui/commit/d4bd7c73e4d04eb4e3fd5015c17fba022ce5579b))
+* sync release docs to Release Please + OCI chart ([caa3b53](https://github.com/bzzdevlabs/crossplane-ui/commit/caa3b53b5af1051de00938107e8a15d72e1776b0))
+
+
+### Build System
+
+* **repo:** swap semantic-release for Release Please + seed Chart.yaml ([b68718e](https://github.com/bzzdevlabs/crossplane-ui/commit/b68718ede9552251f670b0a7f387bcd0b2e766ed))
+
 ## [Unreleased]
 
 ### Added
