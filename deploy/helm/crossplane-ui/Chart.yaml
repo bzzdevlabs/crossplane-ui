@@ -6,10 +6,11 @@ description: |
   Functions, ...) with a Rancher-inspired look & feel.
 type: application
 
-# The chart version is bumped by semantic-release on every release.
-# The application version tracks the latest gateway/auth container tag.
-version: 0.1.0
-appVersion: "0.1.0"
+# Both version and appVersion are bumped by Release Please on every release
+# (see ADR-0008 + release-please-config.json → extra-files). They stay in
+# lock-step with the repo's vX.Y.Z tag and the gateway/auth image tags.
+version: 1.1.0
+appVersion: "1.1.0"
 
 home: https://github.com/bzzdevlabs/crossplane-ui
 sources:

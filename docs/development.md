@@ -111,6 +111,9 @@ kind load docker-image library/gateway:dev library/auth:dev --name crossplane-ui
 See [CONTRIBUTING.md](../CONTRIBUTING.md). TL;DR:
 
 - Conventional commits enforced via `commitlint` pre-commit hook.
-- `semantic-release` computes the next version and the changelog from the
-  commit history on every push to `main`.
-- Container images and the Helm chart are published by CI only.
+- [Release Please](https://github.com/googleapis/release-please) maintains
+  a `chore(release)` PR on `main` with the accumulated changelog and
+  Chart.yaml bump. Merging the PR cuts the tag and the GitHub Release.
+- Container images (signed, SLSA-attested) and the Helm chart (OCI +
+  release tarball) are published by CI only, in the same workflow run as
+  the release. See ADR-0008 and ADR-0009.

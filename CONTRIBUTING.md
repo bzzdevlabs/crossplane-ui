@@ -77,8 +77,12 @@ chore(deps): bump go to 1.26.2
 
 Breaking changes MUST use the `!` marker and a `BREAKING CHANGE:` footer.
 
-Releases and the changelog are produced automatically from the commit history
-by `semantic-release` on the `main` branch.
+Releases and the changelog are produced from the commit history by
+[Release Please](https://github.com/googleapis/release-please) (see
+ADR-0008). On every `main` push Release Please maintains a
+`chore(release)` pull request with the accumulated changelog and
+Chart.yaml bump; merging that PR cuts the tag, the GitHub Release and
+publishes the signed images + Helm chart (OCI) in a single workflow run.
 
 ## Submitting changes
 

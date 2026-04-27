@@ -1,22 +1,23 @@
 # GitHub Actions CI — crossplane-ui
 #
 # Event gating:
-#   - push to main    → lint + test + build + release (semantic-release,
-#                       may push a v* tag).
 #   - pull_request    → lint + test + build (validation for PRs, incl. dependabot).
-#   - push of v* tag  → lint + test + build + package-images + package-chart
-#                       + scan (attestations, SBOM, GHCR publish).
+#   - push to main    → lint + test + build + release-please. Release Please
+#                       either opens a "chore(release)" PR (no artifacts) or,
+#                       when that PR has just merged, creates the tag + GitHub
+#                       Release and sets release_created=true. In that same
+#                       run, package-images, package-chart and scan jobs build
+#                       and publish signed artifacts against the new tag.
 #
-# Packaging and scanning only run when a version tag is pushed — typically
-# by semantic-release, which runs on main push. Dependabot PRs are bounded
-# to validation jobs.
+# One workflow run owns the entire release event: no race between release
+# creation and asset upload, one SLSA provenance per release. See ADR-0008.
+# Dependabot PRs are bounded to validation jobs.
 
 name: CI
 
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
 
 concurrency:
@@ -202,7 +203,7 @@ jobs:
           path: web/ui/dist/
 
   build-go:
-    name: build:go (${{ matrix.service }})
+    name: build:go:${{ matrix.service }}
     needs: [lint-go, test-go]
     runs-on: ubuntu-latest
     strategy:
@@ -230,33 +231,55 @@ jobs:
           path: bin/${{ matrix.service }}
 
   # ---------------------------------------------------------------------------
-  # Package (tag-only). Ships images to GHCR and chart tarball.
+  # Release Please (main-push only). Either opens a "chore(release)" PR or,
+  # when that PR has just merged, creates the tag + GitHub Release. Downstream
+  # package/scan jobs gate on its `release_created` output so a single
+  # workflow run owns the whole release event. See ADR-0008.
+  # ---------------------------------------------------------------------------
+  release-please:
+    needs: [lint-helm, lint-yaml, build-go, build-ui]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.rp.outputs.release_created }}
+      tag_name: ${{ steps.rp.outputs.tag_name }}
+      version: ${{ steps.rp.outputs.version }}
+    steps:
+      - id: rp
+        uses: googleapis/release-please-action@v5
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # ---------------------------------------------------------------------------
+  # Package images (release-gated). Ships gateway + auth to GHCR, signed
+  # keyless via Sigstore + SLSA provenance attestations.
   # ---------------------------------------------------------------------------
   package-images:
-    needs: [build-go, build-ui]
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [release-please]
+    if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
       id-token: write        # OIDC token for Sigstore/Fulcio signing
       attestations: write    # write SLSA provenance + SBOM attestations
+    env:
+      VERSION: ${{ needs.release-please.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Compute version
-        id: ver
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
-          else
-            echo "version=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
-          fi
+      - uses: sigstore/cosign-installer@v3
       - name: Build & push gateway
         id: push-gateway
         uses: docker/build-push-action@v6
@@ -271,11 +294,17 @@ jobs:
           provenance: mode=max
           sbom: true
           build-args: |
-            VERSION=${{ steps.ver.outputs.version }}
+            VERSION=${{ env.VERSION }}
             COMMIT=${{ github.sha }}
           tags: |
-            ghcr.io/bzzdevlabs/crossplane-ui/gateway:${{ steps.ver.outputs.version }}
+            ghcr.io/bzzdevlabs/crossplane-ui/gateway:${{ env.VERSION }}
             ghcr.io/bzzdevlabs/crossplane-ui/gateway:latest
+      - name: Sign gateway (cosign keyless)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign --yes \
+            ghcr.io/bzzdevlabs/crossplane-ui/gateway@${{ steps.push-gateway.outputs.digest }}
       - name: Attest gateway provenance
         uses: actions/attest-build-provenance@v2
         with:
@@ -294,11 +323,17 @@ jobs:
           provenance: mode=max
           sbom: true
           build-args: |
-            VERSION=${{ steps.ver.outputs.version }}
+            VERSION=${{ env.VERSION }}
             COMMIT=${{ github.sha }}
           tags: |
-            ghcr.io/bzzdevlabs/crossplane-ui/auth:${{ steps.ver.outputs.version }}
+            ghcr.io/bzzdevlabs/crossplane-ui/auth:${{ env.VERSION }}
             ghcr.io/bzzdevlabs/crossplane-ui/auth:latest
+      - name: Sign auth (cosign keyless)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign --yes \
+            ghcr.io/bzzdevlabs/crossplane-ui/auth@${{ steps.push-auth.outputs.digest }}
       - name: Attest auth provenance
         uses: actions/attest-build-provenance@v2
         with:
@@ -306,40 +341,77 @@ jobs:
           subject-digest: ${{ steps.push-auth.outputs.digest }}
           push-to-registry: true
 
+  # ---------------------------------------------------------------------------
+  # Package chart (release-gated). Publishes two channels:
+  #   1. OCI on GHCR         — `helm install oci://ghcr.io/...`
+  #   2. GitHub Release asset — `.tgz` browsable from the release page
+  # Both are cosign-signed + carry SLSA provenance. See ADR-0009.
+  # ---------------------------------------------------------------------------
   package-chart:
-    needs: [lint-helm, lint-yaml, build-go, build-ui]
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [release-please]
+    if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write        # gh release upload
+      packages: write        # helm push oci
       id-token: write
       attestations: write
+    env:
+      TAG: ${{ needs.release-please.outputs.tag_name }}
+      VERSION: ${{ needs.release-please.outputs.version }}
+      OCI_REF: oci://ghcr.io/bzzdevlabs/crossplane-ui/charts
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
       - uses: azure/setup-helm@v4
         with:
           version: ${{ env.HELM_VERSION }}
-      - run: helm repo add dex https://charts.dexidp.io
-      - run: helm dependency update deploy/helm/crossplane-ui
-      - run: mkdir -p dist && helm package deploy/helm/crossplane-ui --destination dist
+      - uses: sigstore/cosign-installer@v3
+      - name: Login to GHCR (helm OCI)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | \
+            helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+      - name: Package chart
+        run: |
+          helm repo add dex https://charts.dexidp.io
+          helm dependency update deploy/helm/crossplane-ui
+          mkdir -p dist
+          helm package deploy/helm/crossplane-ui --destination dist
+      - name: Push chart to OCI
+        id: push-chart
+        run: |
+          out=$(helm push "dist/crossplane-ui-${VERSION}.tgz" "${OCI_REF}" 2>&1)
+          echo "$out"
+          digest=$(echo "$out" | awk '/Digest:/ {print $2}')
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+      - name: Sign chart (cosign keyless)
+        env:
+          COSIGN_EXPERIMENTAL: "1"
+        run: |
+          cosign sign --yes \
+            ghcr.io/bzzdevlabs/crossplane-ui/charts/crossplane-ui@${{ steps.push-chart.outputs.digest }}
       - name: Attest chart provenance
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: dist/*.tgz
-      - uses: actions/upload-artifact@v4
-        with:
-          name: helm-chart
-          path: dist/*.tgz
+      - name: Upload tarball to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${TAG}" "dist/crossplane-ui-${VERSION}.tgz" --clobber
 
   # ---------------------------------------------------------------------------
-  # Scan (tag-only). Docker Scout against the just-pushed images. Trivy was
-  # dropped because the upstream image itself shipped known-vulnerable libs.
+  # Scan (release-gated). Docker Scout against the just-pushed images. Trivy
+  # was dropped because the upstream image itself shipped known-vulnerable libs.
   # ---------------------------------------------------------------------------
   scan-docker-scout:
-    needs: [package-images]
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [release-please, package-images]
+    if: needs.release-please.outputs.release_created == 'true'
     runs-on: ubuntu-latest
     continue-on-error: true
+    env:
+      VERSION: ${{ needs.release-please.outputs.tag_name }}
     steps:
       - uses: actions/checkout@v6
       - uses: docker/login-action@v4
@@ -350,41 +422,6 @@ jobs:
       - name: Install Docker Scout
         run: curl -fsSL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
       - name: Scan gateway
-        run: docker scout cves --only-severity critical,high --exit-code ghcr.io/bzzdevlabs/crossplane-ui/gateway:${GITHUB_REF_NAME}
+        run: docker scout cves --only-severity critical,high --exit-code ghcr.io/bzzdevlabs/crossplane-ui/gateway:${VERSION}
       - name: Scan auth
-        run: docker scout cves --only-severity critical,high --exit-code ghcr.io/bzzdevlabs/crossplane-ui/auth:${GITHUB_REF_NAME}
-
-  # ---------------------------------------------------------------------------
-  # Release (tag-only). semantic-release with @semantic-release/github plugin.
-  # ---------------------------------------------------------------------------
-  release:
-    # semantic-release analyzes Conventional Commits on main and, when a
-    # release is warranted, pushes a v* tag + GitHub Release. The tag push
-    # then re-enters this workflow and triggers package-images / chart /
-    # scan. Keep release on main-push (not on tags) to avoid a loop.
-    needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npx --yes \
-            -p @semantic-release/github \
-            -p @semantic-release/commit-analyzer \
-            -p @semantic-release/release-notes-generator \
-            -p @semantic-release/changelog \
-            -p @semantic-release/git \
-            -p semantic-release \
-            semantic-release
+        run: docker scout cves --only-severity critical,high --exit-code ghcr.io/bzzdevlabs/crossplane-ui/auth:${VERSION}

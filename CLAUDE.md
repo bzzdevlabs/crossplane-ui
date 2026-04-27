@@ -117,13 +117,20 @@ Port `8080` on the host is commonly taken; the compose gateway is remapped to
   GitHub's `ubuntu-latest` runner ships `gcc`; the workflow sets
   `CGO_ENABLED=1` before `go test`.
 
-## CI scope (deliberately narrow right now)
+## CI and releases
 
-`.github/workflows/ci.yml` currently ships only `lint` and `test` jobs. Jobs
-for `build`, `package`, `scan` (Docker Scout; Trivy was dropped for the
-known-vuln reason) and `release` (semantic-release on GitHub) are **present
-but fully commented out** — uncomment them when the project is ready to
-publish images to GHCR and cut releases. License-scanning was removed.
+`.github/workflows/ci.yml` runs `lint` + `test` + `build` on every PR and
+main push. On `main` push it additionally runs `release-please`
+(googleapis/release-please-action@v5), which either opens a
+`chore(release)` PR or, when that PR has just been merged, creates the
+tag + GitHub Release. In that same workflow run, `package-images`,
+`package-chart` and `scan-docker-scout` build and publish signed
+artifacts — two container images to GHCR and the Helm chart to both
+OCI (`oci://ghcr.io/bzzdevlabs/crossplane-ui/charts/crossplane-ui`) and
+the GitHub Release assets. Cosign keyless + SLSA build provenance +
+SBOM everywhere. Docker Scout scans the just-pushed images; Trivy was
+dropped because the upstream image itself shipped known-vulnerable
+libs. License-scanning was removed. See ADR-0008 and ADR-0009.
 
 ## Commits and conventions
 

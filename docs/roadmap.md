@@ -16,7 +16,7 @@ ones add Crossplane-specific functionality.
 | ~~M8~~ ✓  | Configuration (form) views for Composition, XRD, Provider, Function, ProviderConfig.                  | Typed forms for the 5 most common kinds.           |
 | **M9**    | Embed Vue SPA into gateway (`//go:embed`) + multi-stage Dockerfile. One image ships API + UI.         | `docker run gateway` serves the UI and /api/v1/*.  |
 | **M10**   | SSO: Dex connectors UI (LDAP / SAML / GitHub / Google), docs, sample `values.yaml` per provider.      | SSO login end-to-end against test IdP.             |
-| **M11**   | Playwright e2e, `helm unittest`, `semantic-release`, chart publishing, v1.0.0 GA.                     | GA artefacts released by CI.                       |
+| **M11**   | Playwright e2e, `helm unittest`, Release Please + OCI chart publishing (ADR-0008/0009), v1.0.0 GA.    | GA artefacts released by CI.                       |
 
 ## Beyond v1
 
