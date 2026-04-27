@@ -1,7 +1,7 @@
 # 0009. Helm chart distribution via OCI (and GitHub Release assets)
 
 - Date: 2026-04-24
-- Status: Accepted
+- Status: Accepted (extended by [ADR-0010](0010-helm-chart-github-pages-channel.md) on 2026-04-27 to add GitHub Pages as a third channel)
 - Deciders: @qgerard
 - Tags: release, distribution, supply-chain
 
