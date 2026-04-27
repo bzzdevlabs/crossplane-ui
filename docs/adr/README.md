@@ -26,4 +26,5 @@ Michael Nygard — see <https://adr.github.io>.
 | 0006 | [UI shell: product-level nav + contextual sidebar + namespace scope](0006-ui-shell-product-nav-namespace-scope.md) | Accepted |
 | 0007 | [Resource view conventions & kind registry](0007-resource-view-conventions-kind-registry.md) | Accepted |
 | 0008 | [Release Please for versioning and release automation](0008-release-please-for-versioning.md) | Accepted |
-| 0009 | [Helm chart distribution via OCI](0009-helm-chart-oci-distribution.md) | Accepted |
+| 0009 | [Helm chart distribution via OCI](0009-helm-chart-oci-distribution.md) | Accepted (extended by 0010) |
+| 0010 | [Add GitHub Pages as a third Helm chart distribution channel](0010-helm-chart-github-pages-channel.md) | Accepted |
