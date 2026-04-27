@@ -5,40 +5,29 @@ description: |
   resources (Compositions, Composite Resources, Managed Resources, Providers,
   Functions, ...) with a Rancher-inspired look & feel.
 type: application
-
-# Both version and appVersion are bumped by Release Please on every release
-# (see ADR-0008 + release-please-config.json → extra-files). They stay in
-# lock-step with the repo's vX.Y.Z tag and the gateway/auth image tags.
-version: 1.1.0
-appVersion: "1.1.0"
-
+version: 1.1.1
+appVersion: 1.1.1
 home: https://github.com/bzzdevlabs/crossplane-ui
 sources:
   - https://github.com/bzzdevlabs/crossplane-ui
-
-kubeVersion: ">=1.33.0-0"
-
+kubeVersion: '>=1.33.0-0'
 keywords:
   - crossplane
   - admin
   - dashboard
   - rancher
   - platform-engineering
-
 maintainers:
   - name: Quentin Gerard
     email: quentin.gerard@telespazio.com
-
 icon: https://crossplane.io/favicon.svg
-
 annotations:
   artifacthub.io/license: Apache-2.0
   artifacthub.io/category: integration-delivery
-  artifacthub.io/prerelease: "true"
-
+  artifacthub.io/prerelease: 'true'
 dependencies:
   - name: dex
-    version: "~0.19.0"
+    version: ~0.19.0
     repository: https://charts.dexidp.io
     condition: dex.enabled
     alias: dex
