@@ -400,6 +400,39 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${TAG}" "dist/crossplane-ui-${VERSION}.tgz" --clobber
+      # Refresh the Helm repo index on the gh-pages branch so users can
+      # `helm repo add crossplane-ui https://bzzdevlabs.github.io/crossplane-ui`
+      # and resolve charts the classic way. The .tgz itself stays on the
+      # GitHub Release; gh-pages only carries index.yaml pointing back at
+      # the release download URL.
+      - name: Refresh Helm repo index on gh-pages
+        run: |
+          set -euo pipefail
+          git config --global user.name  "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages:gh-pages
+          git worktree add /tmp/gh-pages gh-pages
+          cp "dist/crossplane-ui-${VERSION}.tgz" /tmp/gh-pages/
+          # --merge preserves entries for previous versions; new entry uses
+          # the GitHub Release download URL as its prefix.
+          if [ -f /tmp/gh-pages/index.yaml ]; then
+            helm repo index /tmp/gh-pages \
+              --url "https://github.com/bzzdevlabs/crossplane-ui/releases/download/${TAG}" \
+              --merge /tmp/gh-pages/index.yaml
+          else
+            helm repo index /tmp/gh-pages \
+              --url "https://github.com/bzzdevlabs/crossplane-ui/releases/download/${TAG}"
+          fi
+          # Drop the .tgz; only index.yaml is committed to gh-pages.
+          rm "/tmp/gh-pages/crossplane-ui-${VERSION}.tgz"
+          cd /tmp/gh-pages
+          git add index.yaml
+          if git diff --cached --quiet; then
+            echo "index.yaml unchanged, nothing to commit"
+          else
+            git commit -m "release: index ${TAG}"
+            git push origin gh-pages
+          fi
 
   # ---------------------------------------------------------------------------
   # Scan (release-gated). Docker Scout against the just-pushed images. Trivy
