@@ -203,7 +203,7 @@ jobs:
           path: web/ui/dist/
 
   build-go:
-    name: build:go (${{ matrix.service }})
+    name: build:go:${{ matrix.service }}
     needs: [lint-go, test-go]
     runs-on: ubuntu-latest
     strategy:
@@ -237,7 +237,7 @@ jobs:
   # workflow run owns the whole release event. See ADR-0008.
   # ---------------------------------------------------------------------------
   release-please:
-    needs: [lint-go, lint-ui, lint-helm, lint-yaml, test-go, test-ui, build-go, build-ui]
+    needs: [lint-helm, lint-yaml, build-go, build-ui]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
