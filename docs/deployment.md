@@ -11,17 +11,42 @@
 
 ## Install
 
-```bash
-helm repo add dex https://charts.dexidp.io
-helm dependency update deploy/helm/crossplane-ui
+The chart ships through three channels — pick whichever fits your
+workflow (all three publish identical artifacts; see ADR-0009 + ADR-0010
+for the rationale).
 
-helm upgrade --install crossplane-ui deploy/helm/crossplane-ui \
+### Channel A — Helm repository (recommended)
+
+```bash
+helm repo add crossplane-ui https://bzzdevlabs.github.io/crossplane-ui
+helm repo update
+helm upgrade --install crossplane-ui crossplane-ui/crossplane-ui \
+    --version <X.Y.Z> \
     --namespace crossplane-ui --create-namespace \
     --set ingress.enabled=true \
     --set ingress.className=nginx \
     --set ingress.hosts[0].host=crossplane-ui.example.com \
     --set ingress.hosts[0].paths[0].path=/ \
     --set ingress.hosts[0].paths[0].pathType=Prefix
+```
+
+### Channel B — OCI (no `helm repo add`)
+
+```bash
+helm upgrade --install crossplane-ui \
+    oci://ghcr.io/bzzdevlabs/crossplane-ui/charts/crossplane-ui \
+    --version <X.Y.Z> \
+    --namespace crossplane-ui --create-namespace
+```
+
+### Channel C — From source (development)
+
+```bash
+helm repo add dex https://charts.dexidp.io
+helm dependency update deploy/helm/crossplane-ui
+
+helm upgrade --install crossplane-ui deploy/helm/crossplane-ui \
+    --namespace crossplane-ui --create-namespace
 ```
 
 ### Bootstrap administrator
