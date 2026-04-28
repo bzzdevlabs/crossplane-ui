@@ -5,8 +5,8 @@ description: |
   resources (Compositions, Composite Resources, Managed Resources, Providers,
   Functions, ...) with a Rancher-inspired look & feel.
 type: application
-version: 1.1.1
-appVersion: 1.1.1
+version: 1.2.0
+appVersion: 1.2.0
 home: https://github.com/bzzdevlabs/crossplane-ui
 sources:
   - https://github.com/bzzdevlabs/crossplane-ui
