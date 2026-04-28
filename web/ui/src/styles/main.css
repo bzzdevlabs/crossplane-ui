@@ -1,33 +1,103 @@
 /*
- * Design tokens. These are temporary values that will be replaced in M5 by the
- * Rancher component library's tokens once @rancher/components is wired in.
+ * Design tokens — Crossplane-UI Design System (v0.2).
+ * These supersede the M5 placeholder values; they are the canonical
+ * source of truth for color, type, spacing, radius and shadow used
+ * by every component under web/ui/src.
+ *
+ * Spec: ../../../colors_and_type.css (mirror of this file in the DS).
  */
 :root {
   color-scheme: light dark;
 
+  /* ---- Base palette (light) ---- */
   --color-bg: #f7f8fa;
   --color-surface: #fff;
   --color-surface-alt: #f2f4f7;
   --color-border: #e2e5ea;
   --color-text: #1f2328;
   --color-text-muted: #5f6773;
+
+  /* ---- Brand accent (Crossplane blue) ---- */
   --color-accent: #2e4fd9;
   --color-accent-subtle: #e7ecff;
   --color-on-accent: #fff;
-  --color-danger: #c0392b;
-  --topbar-height: 3.25rem;
 
-  font-family:
-    Lato,
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+  /* ---- Semantic ---- */
+  --color-danger: #c0392b;
+
+  /* ---- Status pill palette ---- */
+  --status-ready-fg: #1f7a3a;
+  --status-ready-bg: #e6f6ed;
+  --status-degraded-fg: #a3341f;
+  --status-degraded-bg: #fdebe7;
+  --status-pending-fg: #8a6100;
+  --status-pending-border: #c9a227;
+  --status-pending-bg: #fff4d1;
+
+  /* ---- Product accents (web/ui/src/products/index.ts) ---- */
+  --product-home: #2e4fd9;
+  --product-crossplane: #6c5ce7;
+  --product-users: #0984e3;
+  --product-settings: #636e72;
+
+  /* ---- Layout ---- */
+  --topbar-height: 3.25rem;
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 64px;
+
+  /* ---- Radius / shadow ---- */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-pill: 999px;
+  --shadow-card: 0 4px 12px rgb(0 0 0 / 12%);
+  --shadow-popover: 0 6px 18px rgb(0 0 0 / 12%);
+  --shadow-login: 0 10px 30px rgb(0 0 0 / 8%);
+  --shadow-drawer: 2px 0 16px rgb(0 0 0 / 20%);
+
+  /* ---- Spacing scale ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 1.75rem;
+  --space-8: 2rem;
+
+  /* ---- Type ---- */
+  --font-sans:
+    lato, system-ui, -apple-system, 'Segoe UI', roboto, 'Helvetica Neue',
+    arial, sans-serif;
+  --font-mono:
+    ui-monospace, sfmono-regular, menlo, monaco, consolas,
+    'Liberation Mono', monospace;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semi: 600;
+  --font-weight-black: 900;
+  --fs-display: 1.75rem;
+  --fs-h1: 1.5rem;
+  --fs-h2: 1rem;
+  --fs-body: 0.95rem;
+  --fs-default: 0.9rem;
+  --fs-small: 0.85rem;
+  --fs-meta: 0.8rem;
+  --fs-eyebrow: 0.75rem;
+  --fs-micro: 0.7rem;
+  --tracking-eyebrow: 0.08em;
+  --tracking-tile: 0.06em;
+  --tracking-meta: 0.05em;
+  --tracking-tight: 0.04em;
+  --tracking-badge: 0.02em;
+  --leading-tight: 1.2;
+  --leading-default: 1.4;
+  --leading-body: 1.5;
+
+  font-family: var(--font-sans);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: var(--leading-body);
   color: var(--color-text);
   background: var(--color-bg);
 }
@@ -44,6 +114,10 @@
     --color-accent-subtle: #1f2a52;
     --color-on-accent: #0f1419;
     --color-danger: #ff6b5e;
+    --status-ready-bg: rgb(31 122 58 / 18%);
+    --status-degraded-bg: rgb(163 52 31 / 20%);
+    --status-pending-bg: rgb(201 162 39 / 20%);
+    --status-pending-fg: #e6c14a;
   }
 }
 
@@ -72,4 +146,27 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+/* ============================================================
+ * Shared utility classes — used by Vue components scoped styles
+ * via :global() or directly on template markup.
+ * ============================================================ */
+
+.eyebrow {
+  font-size: var(--fs-eyebrow);
+  font-weight: var(--font-weight-semi);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+  color: var(--color-text-muted);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.mono,
+.code {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
 }

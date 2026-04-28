@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n';
-import type { RouteLocationRaw } from 'vue-router';
 
 import StatusPill from '@/components/ui/StatusPill.vue';
 import ActionMenu, { type ActionItem } from '@/components/ui/ActionMenu.vue';
+import BreadcrumbBar, { type Crumb } from '@/components/ui/BreadcrumbBar.vue';
 import type { StatusVariant } from '@/resources/registry';
 
 defineProps<{
@@ -11,7 +11,7 @@ defineProps<{
   kind?: string;
   metaParts?: readonly string[];
   status?: StatusVariant;
-  breadcrumbs?: readonly { readonly label: string; readonly to?: RouteLocationRaw }[];
+  breadcrumbs?: readonly Crumb[];
   saving?: boolean;
   canApply?: boolean;
   overflowItems?: readonly ActionItem[];
@@ -29,13 +29,7 @@ const { t } = useI18n();
 
 <template>
   <section class="detail">
-    <nav v-if="breadcrumbs && breadcrumbs.length" class="breadcrumbs">
-      <template v-for="(crumb, idx) in breadcrumbs" :key="idx">
-        <RouterLink v-if="crumb.to" :to="crumb.to">{{ crumb.label }}</RouterLink>
-        <span v-else class="current">{{ crumb.label }}</span>
-        <span v-if="idx < breadcrumbs.length - 1" class="sep">/</span>
-      </template>
-    </nav>
+    <BreadcrumbBar v-if="breadcrumbs && breadcrumbs.length" :items="breadcrumbs" />
 
     <header class="page-header">
       <div class="title-block">
@@ -84,30 +78,6 @@ const { t } = useI18n();
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.breadcrumbs {
-  display: flex;
-  gap: 0.35rem;
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-}
-
-.breadcrumbs a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.breadcrumbs a:hover {
-  color: var(--color-text);
-}
-
-.breadcrumbs .current {
-  color: var(--color-text);
-}
-
-.breadcrumbs .sep {
-  opacity: 0.5;
 }
 
 .page-header {

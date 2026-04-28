@@ -7,6 +7,7 @@ import FormShell from '@/components/forms/FormShell.vue';
 import type { Obj } from '@/components/forms/path';
 import { schemaForObject } from '@/components/forms/schemas';
 import ResourceDetailTemplate from '@/components/resources/ResourceDetailTemplate.vue';
+import StatusPill from '@/components/ui/StatusPill.vue';
 import Tabs from '@/components/ui/Tabs.vue';
 import { resourceKindById, statusFromConditions } from '@/resources/registry';
 import type { StatusVariant } from '@/resources/registry';
@@ -28,7 +29,45 @@ const errorMsg = ref<string | null>(null);
 const notice = ref<string | null>(null);
 const original = ref<Obj>({});
 const draft = ref<Obj>({});
-const activeTab = ref<'details' | 'yaml'>('details');
+type TabId = 'details' | 'yaml' | 'events' | 'conditions';
+const activeTab = ref<TabId>('details');
+
+interface Condition {
+  readonly type: string;
+  readonly status: string;
+  readonly reason?: string;
+  readonly lastTransitionTime?: string;
+}
+
+function age(ts: string | undefined): string {
+  if (!ts) return '';
+  const ms = Date.now() - new Date(ts).getTime();
+  if (Number.isNaN(ms) || ms < 0) return '';
+  const days = Math.floor(ms / 86_400_000);
+  if (days >= 1) return `${days}d`;
+  const hours = Math.floor(ms / 3_600_000);
+  if (hours >= 1) return `${hours}h`;
+  return `${Math.max(Math.floor(ms / 60_000), 1)}m`;
+}
+
+const conditions = computed<readonly Condition[]>(() => {
+  const obj = original.value;
+  const statusObj = obj.status;
+  const list =
+    statusObj && typeof statusObj === 'object'
+      ? (statusObj as { conditions?: unknown }).conditions
+      : undefined;
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter((c): c is Record<string, unknown> => !!c && typeof c === 'object')
+    .map((c) => ({
+      type: typeof c.type === 'string' ? c.type : '',
+      status: typeof c.status === 'string' ? c.status : 'Unknown',
+      reason: typeof c.reason === 'string' ? c.reason : undefined,
+      lastTransitionTime:
+        typeof c.lastTransitionTime === 'string' ? c.lastTransitionTime : undefined,
+    }));
+});
 
 const ref_ = computed<ResourceRef>(() => {
   const params = route.params as Record<string, string | string[] | undefined>;
@@ -163,6 +202,8 @@ async function remove(): Promise<void> {
 const tabs = computed(() => [
   { id: 'details', label: t('resource.tabs.details') },
   { id: 'yaml', label: t('resource.tabs.yaml') },
+  { id: 'events', label: t('resource.tabs.events') },
+  { id: 'conditions', label: t('resource.tabs.conditions') },
 ]);
 
 const breadcrumbs = computed(() => [
@@ -200,7 +241,28 @@ onMounted(load);
           v-model="draft"
           :form-component="schema?.component ?? null"
         />
-        <FormShell v-else v-model="draft" :form-component="null" />
+        <FormShell v-else-if="activeTab === 'yaml'" v-model="draft" :form-component="null" />
+        <section v-else-if="activeTab === 'conditions'" class="card">
+          <div
+            v-for="(c, i) in conditions"
+            :key="`${c.type}-${i}`"
+            class="cond-row"
+          >
+            <span class="cond-type">{{ c.type }}</span>
+            <StatusPill
+              :variant="c.status === 'True' ? 'ready' : 'degraded'"
+              :label="c.status"
+            />
+            <span v-if="c.reason" class="cond-reason">{{ c.reason }}</span>
+            <span class="cond-age">{{ age(c.lastTransitionTime) }}</span>
+          </div>
+          <p v-if="conditions.length === 0" class="empty">
+            {{ t('resource.detail.noConditions') }}
+          </p>
+        </section>
+        <section v-else class="card">
+          <p class="empty">{{ t('resource.detail.noEvents') }}</p>
+        </section>
       </div>
     </template>
   </ResourceDetailTemplate>
@@ -225,5 +287,50 @@ onMounted(load);
 
 .tab-body {
   margin-top: 0.75rem;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.cond-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.cond-row:last-child {
+  border-bottom: 0;
+}
+
+.cond-type {
+  width: 110px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.cond-reason {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.cond-age {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+}
+
+.empty {
+  margin: 0;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  padding: 1rem;
 }
 </style>

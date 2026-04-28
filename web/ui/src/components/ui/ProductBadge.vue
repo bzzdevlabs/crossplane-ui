@@ -5,8 +5,10 @@ defineProps<{
   icon?: Component;
   label?: string;
   color: string;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
 }>();
+
+const ICON_PX: Record<'sm' | 'md' | 'lg', number> = { sm: 14, md: 18, lg: 32 };
 </script>
 
 <template>
@@ -16,7 +18,7 @@ defineProps<{
     :style="{ background: color }"
     :title="label"
   >
-    <component :is="icon" v-if="icon" :size="size === 'sm' ? 14 : 18" aria-hidden="true" />
+    <component :is="icon" v-if="icon" :size="ICON_PX[size ?? 'md']" aria-hidden="true" />
     <template v-else>{{ label }}</template>
   </span>
 </template>
@@ -43,5 +45,12 @@ defineProps<{
   width: 1.5rem;
   height: 1.5rem;
   font-size: 0.7rem;
+}
+
+.badge[data-size='lg'] {
+  width: 3.5rem;
+  height: 3.5rem;
+  font-size: 1.5rem;
+  border-radius: 8px;
 }
 </style>

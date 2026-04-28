@@ -70,6 +70,17 @@
     },
     "logout": "Sign out"
   },
+  "dashboard": {
+    "allResources": "All resources",
+    "allResourcesHint": "across all namespaces",
+    "readyHint": "healthy",
+    "pendingHint": "awaiting reconcile",
+    "needsAttention": "Needs attention",
+    "needsAttentionHint": "degraded or errored",
+    "recent": "Recent resources",
+    "viewAll": "View all",
+    "providers": "Providers"
+  },
   "home": {
     "heading": "Crossplane overview",
     "empty": "No Crossplane resources visible with the current credentials.",
@@ -117,6 +128,7 @@
     "backHome": "Back to home"
   },
   "common": {
+    "all": "All",
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete",
@@ -156,7 +168,9 @@
       "empty": "No resources of this kind yet."
     },
     "detail": {
-      "editAsYaml": "Edit as YAML"
+      "editAsYaml": "Edit as YAML",
+      "noEvents": "No events to display.",
+      "noConditions": "No conditions reported."
     }
   }
 }

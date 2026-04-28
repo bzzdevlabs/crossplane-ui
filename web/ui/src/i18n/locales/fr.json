@@ -73,6 +73,17 @@
     },
     "logout": "Déconnexion"
   },
+  "dashboard": {
+    "allResources": "Toutes les ressources",
+    "allResourcesHint": "dans tous les namespaces",
+    "readyHint": "saines",
+    "pendingHint": "en attente de réconciliation",
+    "needsAttention": "Attention requise",
+    "needsAttentionHint": "dégradées ou en erreur",
+    "recent": "Ressources récentes",
+    "viewAll": "Tout voir",
+    "providers": "Providers"
+  },
   "home": {
     "heading": "Vue d'ensemble Crossplane",
     "empty": "Aucune ressource Crossplane visible avec les droits courants.",
@@ -120,6 +131,7 @@
     "backHome": "Retour à l'accueil"
   },
   "common": {
+    "all": "Toutes",
     "cancel": "Annuler",
     "save": "Enregistrer",
     "delete": "Supprimer",
@@ -159,7 +171,9 @@
       "empty": "Aucune ressource de ce type."
     },
     "detail": {
-      "editAsYaml": "Éditer en YAML"
+      "editAsYaml": "Éditer en YAML",
+      "noEvents": "Aucun événement à afficher.",
+      "noConditions": "Aucune condition rapportée."
     }
   }
 }

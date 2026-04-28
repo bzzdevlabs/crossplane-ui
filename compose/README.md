@@ -33,24 +33,24 @@ task dev:kubeconfig    # prints the `export KUBECONFIG=...` line for the host
 
 ## What runs where
 
-| Component  | Where                             | Port(s)            | Purpose                                    |
-| ---------- | --------------------------------- | ------------------ | ------------------------------------------ |
-| k3s        | k3d node container                | 6443 (via k3d LB)  | Kubernetes API + Crossplane controllers.   |
-| Crossplane | k3s, `crossplane-system` ns       | n/a                | Provides the CRDs the UI will list/manage. |
-| `dex`      | compose service                   | 5556               | OIDC IdP with two local users.             |
-| `auth`     | compose service (built image)     | 8081               | Local-user controller (scaffold — M1).     |
-| `gateway`  | compose service (built image)     | 8080               | HTTP API (scaffold — M1).                  |
-| `ui`       | compose service (node:22 + pnpm)  | 5173 (Vite dev)    | Hot-reloading Vue app.                     |
+| Component  | Where                            | Port(s)           | Purpose                                    |
+| ---------- | -------------------------------- | ----------------- | ------------------------------------------ |
+| k3s        | k3d node container               | 6443 (via k3d LB) | Kubernetes API + Crossplane controllers.   |
+| Crossplane | k3s, `crossplane-system` ns      | n/a               | Provides the CRDs the UI will list/manage. |
+| `dex`      | compose service                  | 5556              | OIDC IdP with two local users.             |
+| `auth`     | compose service (built image)    | 8081              | Local-user controller (scaffold — M1).     |
+| `gateway`  | compose service (built image)    | 8080              | HTTP API (scaffold — M1).                  |
+| `ui`       | compose service (node:22 + pnpm) | 5173 (Vite dev)   | Hot-reloading Vue app.                     |
 
 ## Network layout
 
 ```
 ┌─────────────── docker network "k3d-crossplane-ui" ───────────────┐
 │                                                                  │
-│  ┌──────────────────────┐   ┌──────────┐   ┌──────────┐          │
-│  │ k3d-*-server-0       │   │ gateway  │──▶│   auth   │          │
-│  │ (k3s API 6443)       │◀──│  :8080   │   │   :8081  │          │
-│  └──────────────────────┘   └────┬─────┘   └──────────┘          │
+│  ┌──────────────────────┐    ┌──────────┐    ┌──────────┐        │
+│  │ k3d-*-server-0       │    │ gateway  │──▶│   auth   │        │
+│  │ (k3s API 6443)       │◀──│  :8080   │    │   :8081  │        │
+│  └──────────────────────┘    └────┬─────┘    └──────────┘        │
 │                                  │                               │
 │                                  ▼                               │
 │                             ┌────────┐                           │
@@ -73,10 +73,10 @@ task dev:kubeconfig    # prints the `export KUBECONFIG=...` line for the host
 
 Configured in [`dex/config.yaml`](dex/config.yaml):
 
-| Username                       | Password   |
-| ------------------------------ | ---------- |
-| `admin@crossplane-ui.local`    | `password` |
-| `viewer@crossplane-ui.local`   | `password` |
+| Username                     | Password   |
+| ---------------------------- | ---------- |
+| `admin@crossplane-ui.local`  | `password` |
+| `viewer@crossplane-ui.local` | `password` |
 
 OIDC client: `crossplane-ui` / `dev-secret-change-me`.
 

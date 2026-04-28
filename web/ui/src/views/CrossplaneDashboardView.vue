@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Plus, RotateCw } from 'lucide-vue-next';
+import { Plug, Plus, RotateCw } from 'lucide-vue-next';
 
 import StatusPill from '@/components/ui/StatusPill.vue';
 import { statusFromConditions } from '@/resources/registry';
@@ -17,32 +17,47 @@ const loading = ref(false);
 const error = ref<string | null>(null);
 const groups = ref<readonly CrossplaneGroup[]>([]);
 
-const CATEGORY_ORDER = ['composition', 'composite', 'managed', 'provider', 'function'] as const;
+const allResources = computed<readonly CrossplaneResource[]>(() =>
+  groups.value.flatMap((g) => g.items),
+);
 
 const totals = computed(() => {
   let ready = 0;
   let degraded = 0;
   let pending = 0;
-  let total = 0;
-  for (const g of groups.value) {
-    for (const r of g.items) {
-      total += 1;
-      const s = statusFromConditions(r);
-      if (s === 'ready') ready += 1;
-      else if (s === 'degraded' || s === 'errored') degraded += 1;
-      else pending += 1;
-    }
+  for (const r of allResources.value) {
+    const s = statusFromConditions(r);
+    if (s === 'ready') ready += 1;
+    else if (s === 'degraded' || s === 'errored') degraded += 1;
+    else pending += 1;
   }
-  return { ready, degraded, pending, total };
+  return { total: allResources.value.length, ready, degraded, pending };
 });
 
-const sortedGroups = computed(() => {
-  const idx = (c: string): number => {
-    const i = (CATEGORY_ORDER as readonly string[]).indexOf(c);
-    return i < 0 ? CATEGORY_ORDER.length : i;
-  };
-  return [...groups.value].sort((a, b) => idx(a.category) - idx(b.category));
-});
+const recent = computed<readonly CrossplaneResource[]>(() =>
+  [...allResources.value]
+    .sort(
+      (a, b) =>
+        new Date(b.creationTimestamp).getTime() -
+        new Date(a.creationTimestamp).getTime(),
+    )
+    .slice(0, 5),
+);
+
+const providers = computed<readonly CrossplaneResource[]>(
+  () => groups.value.find((g) => g.category === 'provider')?.items ?? [],
+);
+
+function age(ts: string): string {
+  const ms = Date.now() - new Date(ts).getTime();
+  if (Number.isNaN(ms) || ms < 0) return '';
+  const days = Math.floor(ms / 86_400_000);
+  if (days >= 1) return `${days}d`;
+  const hours = Math.floor(ms / 3_600_000);
+  if (hours >= 1) return `${hours}h`;
+  const minutes = Math.floor(ms / 60_000);
+  return `${Math.max(minutes, 1)}m`;
+}
 
 function resourceRoute(r: CrossplaneResource) {
   const parts = r.apiVersion.split('/');
@@ -59,17 +74,8 @@ function resourceRoute(r: CrossplaneResource) {
   } as const;
 }
 
-function listRouteForCategory(category: string) {
-  const kindId = (
-    {
-      composition: 'compositions',
-      composite: 'composites',
-      managed: 'managed',
-      provider: 'providers',
-      function: 'functions',
-    } as Record<string, string>
-  )[category];
-  return { name: 'resource-list', params: { resource: kindId ?? category } };
+function resourceKey(r: CrossplaneResource): string {
+  return `${r.apiVersion}|${r.kind}|${r.namespace ?? ''}|${r.name}`;
 }
 
 async function load(): Promise<void> {
@@ -85,21 +91,6 @@ async function load(): Promise<void> {
   }
 }
 
-function kindLabelForCategory(category: string): string {
-  const map: Record<string, string> = {
-    composition: 'kinds.composition.plural',
-    composite: 'kinds.composite.plural',
-    managed: 'kinds.managed.plural',
-    provider: 'kinds.provider.plural',
-    function: 'kinds.function.plural',
-  };
-  return t(map[category] ?? category);
-}
-
-function resourceKey(r: CrossplaneResource): string {
-  return `${r.apiVersion}|${r.kind}|${r.namespace ?? ''}|${r.name}`;
-}
-
 onMounted(load);
 </script>
 
@@ -111,69 +102,98 @@ onMounted(load);
         <p class="muted">{{ t('home.crossplaneHint') }}</p>
       </div>
       <div class="actions">
-        <button type="button" class="refresh" :disabled="loading" @click="load">
+        <button type="button" class="btn neutral" :disabled="loading" @click="load">
           <RotateCw :size="14" aria-hidden="true" />
           {{ t('common.refresh') }}
         </button>
-        <RouterLink :to="{ name: 'resource-create' }" class="create">
+        <RouterLink :to="{ name: 'resource-create' }" class="btn primary">
           <Plus :size="14" aria-hidden="true" />
-          {{ t('resource.create') }}
+          {{ t('common.create') }}
         </RouterLink>
       </div>
     </header>
 
-    <div v-if="!loading && !error" class="stats">
+    <div class="stats">
       <div class="stat">
-        <div class="stat-value">{{ totals.total }}</div>
-        <div class="stat-label">{{ t('resource.create') }}</div>
+        <div class="label">{{ t('dashboard.allResources') }}</div>
+        <div class="value">{{ totals.total }}</div>
+        <div class="hint">{{ t('dashboard.allResourcesHint') }}</div>
       </div>
-      <div class="stat ready">
-        <div class="stat-value">{{ totals.ready }}</div>
-        <div class="stat-label">{{ t('status.variants.ready') }}</div>
+      <div class="stat">
+        <div class="label">{{ t('status.variants.ready') }}</div>
+        <div class="value ready">{{ totals.ready }}</div>
+        <div class="hint">{{ t('dashboard.readyHint') }}</div>
       </div>
-      <div class="stat degraded">
-        <div class="stat-value">{{ totals.degraded }}</div>
-        <div class="stat-label">{{ t('status.variants.degraded') }}</div>
+      <div class="stat">
+        <div class="label">{{ t('status.variants.pending') }}</div>
+        <div class="value pending">{{ totals.pending }}</div>
+        <div class="hint">{{ t('dashboard.pendingHint') }}</div>
       </div>
-      <div class="stat pending">
-        <div class="stat-value">{{ totals.pending }}</div>
-        <div class="stat-label">{{ t('status.variants.pending') }}</div>
+      <div class="stat">
+        <div class="label">{{ t('dashboard.needsAttention') }}</div>
+        <div class="value degraded">{{ totals.degraded }}</div>
+        <div class="hint">{{ t('dashboard.needsAttentionHint') }}</div>
       </div>
     </div>
 
     <p v-if="loading" class="muted">{{ t('home.loading') }}</p>
     <p v-else-if="error" class="error">{{ t('common.error') }}: {{ error }}</p>
 
-    <div v-else class="groups">
-      <section v-for="g in sortedGroups" :key="g.category" class="group">
-        <header class="group-header">
-          <RouterLink :to="listRouteForCategory(g.category)">
-            <h2>{{ kindLabelForCategory(g.category) }}</h2>
+    <div v-else class="split">
+      <section class="card">
+        <header class="card-header">
+          <h2>{{ t('dashboard.recent') }}</h2>
+          <RouterLink
+            class="link"
+            :to="{ name: 'resource-list', params: { resource: 'managed' } }"
+          >
+            {{ t('dashboard.viewAll') }} →
           </RouterLink>
-          <span class="count">{{ g.items.length }}</span>
         </header>
-
-        <p v-if="g.error" class="group-error">{{ g.error }}</p>
-
-        <p v-if="!g.error && g.items.length === 0" class="muted small">
-          {{ t('home.emptyCategory') }}
-        </p>
-
-        <ul v-else-if="g.items.length > 0" class="tiles">
-          <li v-for="r in g.items" :key="resourceKey(r)">
-            <RouterLink class="tile" :to="resourceRoute(r)">
-              <div class="tile-head">
-                <div class="tile-title">{{ r.name }}</div>
-                <div class="tile-kind">{{ r.kind }}</div>
-              </div>
-              <div class="tile-meta">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-status">{{ t('columns.status') }}</th>
+              <th>{{ t('columns.name') }}</th>
+              <th>{{ t('columns.kind') }}</th>
+              <th>{{ t('columns.namespace') }}</th>
+              <th class="col-age">{{ t('columns.age') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in recent" :key="resourceKey(r)">
+              <td>
                 <StatusPill :variant="statusFromConditions(r)" />
-                <time :datetime="r.creationTimestamp">{{
-                  new Date(r.creationTimestamp).toLocaleDateString()
-                }}</time>
-              </div>
-              <div v-if="r.namespace" class="tile-ns">{{ r.namespace }}</div>
-            </RouterLink>
+              </td>
+              <td>
+                <RouterLink class="link" :to="resourceRoute(r)">{{ r.name }}</RouterLink>
+              </td>
+              <td>{{ r.kind }}</td>
+              <td class="muted-cell">{{ r.namespace ?? '—' }}</td>
+              <td class="muted-cell">{{ age(r.creationTimestamp) }}</td>
+            </tr>
+            <tr v-if="recent.length === 0">
+              <td class="empty" colspan="5">{{ t('home.empty') }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <header class="card-header">
+          <h2>{{ t('dashboard.providers') }}</h2>
+        </header>
+        <ul class="providers">
+          <li v-for="p in providers" :key="resourceKey(p)" class="provider">
+            <Plug :size="16" aria-hidden="true" />
+            <div class="provider-text">
+              <div class="provider-name">{{ p.name }}</div>
+              <div class="provider-version">{{ p.apiVersion }}</div>
+            </div>
+            <StatusPill :variant="statusFromConditions(p)" />
+          </li>
+          <li v-if="providers.length === 0" class="provider empty">
+            {{ t('home.emptyCategory') }}
           </li>
         </ul>
       </section>
@@ -185,7 +205,7 @@ onMounted(load);
 .dashboard {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .page-header {
@@ -199,24 +219,13 @@ onMounted(load);
 h1 {
   margin: 0;
   font-size: 1.5rem;
-}
-
-h2 {
-  margin: 0;
-  font-size: 1rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: inherit;
 }
 
 .muted {
   margin: 0.25rem 0 0;
   color: var(--color-text-muted);
-}
-
-.small {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .error {
@@ -229,40 +238,45 @@ h2 {
   align-items: center;
 }
 
-.refresh,
-.create {
+.btn {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
   padding: 0.4rem 0.9rem;
   border-radius: 6px;
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   cursor: pointer;
   text-decoration: none;
 }
 
-.refresh {
+.btn.neutral {
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: inherit;
 }
 
-.create {
+.btn.primary {
   border: 1px solid var(--color-accent);
   background: var(--color-accent);
   color: var(--color-on-accent);
 }
 
-.refresh[disabled] {
+.btn[disabled] {
   opacity: 0.6;
   cursor: progress;
 }
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.75rem;
+}
+
+@media (max-width: 60rem) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .stat {
@@ -270,122 +284,174 @@ h2 {
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.9rem 1rem;
-}
-
-.stat-value {
-  font-size: 1.6rem;
-  font-weight: 600;
-}
-
-.stat-label {
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.stat.ready {
-  border-color: #1f7a3a;
-}
-
-.stat.degraded {
-  border-color: #a3341f;
-}
-
-.stat.pending {
-  border-color: #c9a227;
-}
-
-.groups {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.35rem;
 }
 
-.group-header {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.group-header a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.group-header a:hover h2 {
-  color: var(--color-accent);
-}
-
-.count {
+.stat .label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
   color: var(--color-text-muted);
-  font-size: 0.85rem;
 }
 
-.group-error {
-  color: var(--color-danger);
-  font-size: 0.85rem;
-  margin: 0;
+.stat .value {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--color-text);
 }
 
-.tiles {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.stat .value.ready {
+  color: #1f7a3a;
+}
+
+.stat .value.pending {
+  color: #8a6100;
+}
+
+.stat .value.degraded {
+  color: #a3341f;
+}
+
+.stat .hint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.split {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
 }
 
-.tile {
+@media (max-width: 60rem) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  padding: 0.9rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.1s ease;
-}
-
-.tile:hover {
-  border-color: var(--color-accent);
-}
-
-.tile-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.tile-title {
-  font-weight: 600;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
-.tile-kind {
-  color: var(--color-text-muted);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.tile-meta {
+.card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--color-text-muted);
+}
+
+.link {
+  color: var(--color-accent);
+  text-decoration: none;
   font-size: 0.8rem;
 }
 
-.tile-ns {
+.link:hover {
+  text-decoration: underline;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--color-text-muted);
+  background: var(--color-surface-alt);
+  border-bottom: 1px solid var(--color-border);
+}
+
+td {
+  padding: 0.55rem 0.9rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+.col-status {
+  width: 8.5rem;
+}
+
+.col-age {
+  width: 5rem;
+}
+
+.muted-cell {
+  color: var(--color-text-muted);
+}
+
+.empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-muted);
+}
+
+.providers {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.provider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.provider:last-child {
+  border-bottom: 0;
+}
+
+.provider-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.provider-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.provider-version {
   font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+}
+
+.provider.empty {
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
 }
 </style>

@@ -118,6 +118,7 @@ function onFormChange(next: Obj): void {
         </button>
       </div>
       <p v-if="yamlError" class="error">{{ yamlError }}</p>
+      <slot name="meta" />
     </div>
 
     <component

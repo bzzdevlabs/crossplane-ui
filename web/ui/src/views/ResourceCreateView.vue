@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router';
 
 import FormShell from '@/components/forms/FormShell.vue';
 import { FORM_SCHEMAS, type FormSchema } from '@/components/forms/schemas';
 import type { Obj } from '@/components/forms/path';
-import ResourceFormTemplate from '@/components/resources/ResourceFormTemplate.vue';
+import BreadcrumbBar from '@/components/ui/BreadcrumbBar.vue';
 import { applyResource, type ResourceRef } from '@/services/api';
 
 const { t } = useI18n();
@@ -73,6 +73,17 @@ function targetRef(): ResourceRef {
 
 const canApply = computed(() => !saving.value);
 
+const metaText = computed(() => {
+  const apiVersion = typeof object.value.apiVersion === 'string' ? object.value.apiVersion : '';
+  const kind = typeof object.value.kind === 'string' ? object.value.kind : '';
+  return [apiVersion, kind].filter(Boolean).join(' · ');
+});
+
+const breadcrumbs = computed(() => [
+  { label: t('products.crossplane.label'), to: { name: 'crossplane-dashboard' } as RouteLocationRaw },
+  { label: t('resource.create') },
+]);
+
 async function apply(): Promise<void> {
   if (!canApply.value) return;
   saving.value = true;
@@ -103,13 +114,7 @@ function goBack(): void {
 
 <template>
   <section class="create">
-    <nav class="breadcrumbs">
-      <RouterLink :to="{ name: 'crossplane-dashboard' }">
-        {{ t('products.crossplane.label') }}
-      </RouterLink>
-      <span>/</span>
-      <span class="current">{{ t('resource.create') }}</span>
-    </nav>
+    <BreadcrumbBar :items="breadcrumbs" />
 
     <header class="page-header">
       <div>
@@ -128,14 +133,28 @@ function goBack(): void {
 
     <p v-if="errorMsg" class="error">{{ errorMsg }}</p>
 
-    <ResourceFormTemplate
-      :saving="saving"
-      :can-apply="canApply"
-      @cancel="goBack"
-      @apply="apply"
-    >
-      <FormShell v-model="object" :form-component="selected.component" />
-    </ResourceFormTemplate>
+    <section class="card">
+      <div class="card-body">
+        <FormShell v-model="object" :form-component="selected.component">
+          <template #meta>
+            <span class="meta">{{ metaText }}</span>
+          </template>
+        </FormShell>
+      </div>
+      <footer class="card-footer">
+        <button type="button" class="btn neutral" @click="goBack">
+          {{ t('common.cancel') }}
+        </button>
+        <button
+          type="button"
+          class="btn primary"
+          :disabled="saving || !canApply"
+          @click="apply"
+        >
+          {{ saving ? t('resource.saving') : t('resource.apply') }}
+        </button>
+      </footer>
+    </section>
   </section>
 </template>
 
@@ -144,23 +163,6 @@ function goBack(): void {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-height: calc(100vh - 4rem);
-}
-
-.breadcrumbs {
-  display: flex;
-  gap: 0.35rem;
-  color: var(--color-text-muted);
-  font-size: 0.85rem;
-}
-
-.breadcrumbs a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.breadcrumbs .current {
-  color: var(--color-text);
 }
 
 .page-header {
@@ -169,15 +171,17 @@ function goBack(): void {
   align-items: flex-end;
   gap: 1rem;
   flex-wrap: wrap;
+  margin-top: 0.5rem;
 }
 
 h1 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.35rem;
+  font-weight: 600;
 }
 
 .muted {
-  margin: 0;
+  margin: 0.2rem 0 0;
   color: var(--color-text-muted);
   font-size: 0.9rem;
 }
@@ -203,5 +207,58 @@ h1 {
   margin: 0;
   color: var(--color-danger);
   white-space: pre-wrap;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-body {
+  padding: 0.75rem;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.meta {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+}
+
+.btn {
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+}
+
+.btn.neutral {
+  background: var(--color-surface);
+  color: inherit;
+}
+
+.btn.primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
