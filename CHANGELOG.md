@@ -41,6 +41,20 @@ commit history (see [CONTRIBUTING.md](CONTRIBUTING.md) for the commit
 conventions, and [ADR-0008](docs/adr/0008-release-please-for-versioning.md)
 for the decision rationale).
 
+## [1.2.0](https://github.com/bzzdevlabs/crossplane-ui/compare/v1.1.1...v1.2.0) (2026-04-28)
+
+
+### Features
+
+* chart gh pages channel ([744b1f5](https://github.com/bzzdevlabs/crossplane-ui/commit/744b1f5af564501b51845b9c7e0802188512f18c))
+* **ui:** updating ui to match designs ([2b97508](https://github.com/bzzdevlabs/crossplane-ui/commit/2b97508ce827c0910bf889f0c6ec09e3e8537dc4))
+
+
+### Documentation
+
+* **adr:** add ADR-0010 (GitHub Pages chart channel) + extend ADR-0009 ([63f6eeb](https://github.com/bzzdevlabs/crossplane-ui/commit/63f6eeb1506a190954f6c47a2a62ac628d046f42))
+* document Helm repo, OCI and source install channels ([6e7b08b](https://github.com/bzzdevlabs/crossplane-ui/commit/6e7b08b10e31e2dfa53bc20cc7e7eb0787a6a5d3))
+
 ## [1.1.1](https://github.com/bzzdevlabs/crossplane-ui/compare/v1.1.0...v1.1.1) (2026-04-27)
 
 
