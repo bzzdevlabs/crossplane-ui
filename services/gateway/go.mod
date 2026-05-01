@@ -6,9 +6,9 @@ require (
 	github.com/coreos/go-oidc/v3 v3.18.0
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.23.2
-	k8s.io/api v0.35.0
-	k8s.io/apimachinery v0.35.0
-	k8s.io/client-go v0.35.0
+	k8s.io/api v0.36.0
+	k8s.io/apimachinery v0.36.0
+	k8s.io/client-go v0.36.0
 )
 
 require (
