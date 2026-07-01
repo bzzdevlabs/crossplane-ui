@@ -49,7 +49,7 @@ jobs:
           - { name: auth, path: services/auth }
           - { name: pkg, path: pkg }
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -71,7 +71,7 @@ jobs:
       run:
         working-directory: web/ui
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: web/ui/package.json
@@ -88,8 +88,8 @@ jobs:
     name: lint:helm
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
-      - uses: azure/setup-helm@v4
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
       - run: helm repo add dex https://charts.dexidp.io
@@ -100,7 +100,7 @@ jobs:
     name: lint:yaml
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ibiqlik/action-yamllint@v3
 
   lint-commits:
@@ -108,7 +108,7 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: wagoid/commitlint-github-action@v6
@@ -132,7 +132,7 @@ jobs:
       # -race links the race runtime via cgo.
       CGO_ENABLED: "1"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -144,7 +144,7 @@ jobs:
       - name: Test ${{ matrix.module.name }}
         working-directory: ${{ matrix.module.path }}
         run: go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: go-coverage-${{ matrix.module.name }}
@@ -158,7 +158,7 @@ jobs:
       run:
         working-directory: web/ui
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: web/ui/package.json
@@ -169,7 +169,7 @@ jobs:
           cache-dependency-path: web/ui/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test:coverage
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ui-coverage
@@ -186,7 +186,7 @@ jobs:
       run:
         working-directory: web/ui
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: web/ui/package.json
@@ -197,7 +197,7 @@ jobs:
           cache-dependency-path: web/ui/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ui-dist
           path: web/ui/dist/
@@ -213,7 +213,7 @@ jobs:
     env:
       CGO_ENABLED: "0"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/setup-go@v6
         with:
           go-version: ${{ env.GO_VERSION }}
@@ -225,7 +225,7 @@ jobs:
       - name: Build ${{ matrix.service }}
         working-directory: services/${{ matrix.service }}
         run: go build -trimpath -o ../../bin/${{ matrix.service }} ./cmd
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: go-bin-${{ matrix.service }}
           path: bin/${{ matrix.service }}
@@ -270,7 +270,7 @@ jobs:
     env:
       VERSION: ${{ needs.release-please.outputs.tag_name }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
       - uses: docker/setup-buildx-action@v4
@@ -282,7 +282,7 @@ jobs:
       - uses: sigstore/cosign-installer@v3
       - name: Build & push gateway
         id: push-gateway
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           # gateway Dockerfile needs the repo root: it embeds the Vue SPA
           # (web/ui/) and shares the Go workspace (pkg/, services/auth/).
@@ -306,14 +306,14 @@ jobs:
           cosign sign --yes \
             ghcr.io/bzzdevlabs/crossplane-ui/gateway@${{ steps.push-gateway.outputs.digest }}
       - name: Attest gateway provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/bzzdevlabs/crossplane-ui/gateway
           subject-digest: ${{ steps.push-gateway.outputs.digest }}
           push-to-registry: true
       - name: Build & push auth
         id: push-auth
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           # auth Dockerfile expects the repo root as build context: its
           # go.mod uses `replace ../../pkg`, so pkg/ must be copyable.
@@ -335,7 +335,7 @@ jobs:
           cosign sign --yes \
             ghcr.io/bzzdevlabs/crossplane-ui/auth@${{ steps.push-auth.outputs.digest }}
       - name: Attest auth provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-name: ghcr.io/bzzdevlabs/crossplane-ui/auth
           subject-digest: ${{ steps.push-auth.outputs.digest }}
@@ -361,10 +361,10 @@ jobs:
       VERSION: ${{ needs.release-please.outputs.version }}
       OCI_REF: oci://ghcr.io/bzzdevlabs/crossplane-ui/charts
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ needs.release-please.outputs.tag_name }}
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
           version: ${{ env.HELM_VERSION }}
       - uses: sigstore/cosign-installer@v3
@@ -392,7 +392,7 @@ jobs:
           cosign sign --yes \
             ghcr.io/bzzdevlabs/crossplane-ui/charts/crossplane-ui@${{ steps.push-chart.outputs.digest }}
       - name: Attest chart provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*.tgz
       - name: Upload tarball to GitHub Release
@@ -446,7 +446,7 @@ jobs:
     env:
       VERSION: ${{ needs.release-please.outputs.tag_name }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
